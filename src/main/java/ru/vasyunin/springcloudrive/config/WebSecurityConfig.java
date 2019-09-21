@@ -8,20 +8,14 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import ru.vasyunin.springcloudrive.service.UserService;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-
-    UserService userService;
+    private CustomAuthSuccessHandler customAuthSucceessHandler;
+    private UserService userService;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -31,7 +25,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/css/**", "/js/**", "/vendor/**").permitAll()
                     .anyRequest().authenticated()
                 .and()
-                    .formLogin().loginPage("/login").permitAll()
+                    .formLogin()
+                    .loginPage("/login")
+                    .permitAll()
+                    .successHandler(customAuthSucceessHandler)
                 .and()
                     .logout().permitAll();
     }
@@ -51,13 +48,20 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 
     @Bean
-    PasswordEncoder passwordEncoder(){
+    BCryptPasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 
 
+    //<editor-fold desc="Autowires">
     @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
+
+    @Autowired
+    public void setCustomAuthSucceessHandler(CustomAuthSuccessHandler customAuthSucceessHandler) {
+        this.customAuthSucceessHandler = customAuthSucceessHandler;
+    }
+    //</editor-fold>
 }

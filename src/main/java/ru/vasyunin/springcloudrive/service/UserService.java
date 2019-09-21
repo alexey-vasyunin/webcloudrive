@@ -9,6 +9,8 @@ import ru.vasyunin.springcloudrive.UserPrincipal;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
 
+import java.util.Collections;
+
 @Service
 public class UserService implements UserDetailsService {
     private UserRepository userRepository;
@@ -31,6 +33,7 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByUsername(username);
         System.out.println(user);
         if (user == null) throw new UsernameNotFoundException("User not found in database");
-        return new UserPrincipal(user);
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), Collections.emptyList());
+//        return new UserPrincipal(user);
     }
 }

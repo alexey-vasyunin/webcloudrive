@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -39,4 +40,29 @@ public class User {
 
     @Column(name = "lastseen")
     private LocalDateTime lastseen;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+
+    private List<Role> roles;
+
+    /**
+     * Check if user has the role
+     * @param role String Name of role
+     * @return Return true if the user has the role
+     */
+    public boolean hasRoles(String role){
+        if (roles == null || role.equals("")) return false;
+        for (Role value : roles) {
+            if (value.getRole_name().equals(role)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "User: id=" + id + ", username= " + username + ", " + firstName + ' ' + lastName;
+    }
 }

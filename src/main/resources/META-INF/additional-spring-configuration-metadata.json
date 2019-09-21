@@ -1,8 +1,1 @@
-{
-  "properties": [
-    {
-      "name": "cloudrive.storage.directory",
-      "type": "java.lang.String",
-      "description": "Storage directory"
-  }
-] }
+[]

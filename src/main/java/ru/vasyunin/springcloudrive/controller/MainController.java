@@ -1,10 +1,13 @@
 package ru.vasyunin.springcloudrive.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import ru.vasyunin.springcloudrive.UserPrincipal;
 import ru.vasyunin.springcloudrive.service.UserService;
@@ -37,4 +40,10 @@ public class MainController {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
+
+//    @ExceptionHandler
+//    public ResponseEntity handlerExceprion(UsernameNotFoundException e){
+//
+//        return new ResponseEntity()
+//    }
 }

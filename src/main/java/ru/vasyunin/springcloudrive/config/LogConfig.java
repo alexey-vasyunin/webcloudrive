@@ -9,9 +9,9 @@ public class LogConfig {
     @Bean
     public CommonsRequestLoggingFilter requestLoggingFilter(){
         CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
-        loggingFilter.setIncludeClientInfo(true);
+        loggingFilter.setIncludeClientInfo(false);
         loggingFilter.setIncludeQueryString(true);
-        loggingFilter.setIncludePayload(true);
+        loggingFilter.setIncludePayload(false);
         return loggingFilter;
     }
 }
