@@ -9,6 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
   <meta name="author" content="">
+  <meta name="_csrf" sec:content="${_csrf.token}"/>
+  <meta name="_csrf_header" sec:content="${_csrf.headerName}"/>
 
   <title>SB Admin - Dashboard</title>
 
@@ -212,7 +214,7 @@
             Ваши файлы</div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+              <table class="table table-bordered" id="fileTable" width="100%" cellspacing="0">
                 <thead>
                 <tr>
                   <th>Имя файла</th>
@@ -230,36 +232,6 @@
                 </tr>
                 </tfoot>
                 <tbody>
-                <tr>
-                  <td>Lael Greer</td>
-                  <td>Systems Administrator</td>
-                  <td>London</td>
-                  <td>21</td>
-                </tr>
-                <tr>
-                  <td>Jonas Alexander</td>
-                  <td>Developer</td>
-                  <td>San Francisco</td>
-                  <td>30</td>
-                </tr>
-                <tr>
-                  <td>Shad Decker</td>
-                  <td>Regional Director</td>
-                  <td>Edinburgh</td>
-                  <td>51</td>
-                </tr>
-                <tr>
-                  <td>Michael Bruce</td>
-                  <td>Javascript Developer</td>
-                  <td>Singapore</td>
-                  <td>29</td>
-                </tr>
-                <tr>
-                  <td>Donna Snider</td>
-                  <td>Customer Support</td>
-                  <td>New York</td>
-                  <td>27</td>
-                </tr>
                 </tbody>
               </table>
             </div>
@@ -335,7 +307,7 @@
   <script th:src="@{vendor/datatables/dataTables.bootstrap4.js}"></script>
 
   <!-- Custom scripts for all pages-->
-  <script th:src="@{js/sb-admin.min.js}"></script>
+  <script th:src="@{js/sb-admin.js}"></script>
 
   <!-- Demo scripts for this page-->
   <script th:src="@{js/demo/datatables-demo.js}"></script>
