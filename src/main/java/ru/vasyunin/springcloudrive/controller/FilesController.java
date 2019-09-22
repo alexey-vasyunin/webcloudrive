@@ -10,14 +10,13 @@ import ru.vasyunin.springcloudrive.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -34,14 +33,11 @@ public class FilesController {
 //    @PostMapping("/api/filelist")
     @GetMapping("/api/filelist")
     public List<FileItem> getFileListFromStorage(HttpServletRequest httpServletRequest){
-        System.out.println(STORAGE);
         HttpSession session = httpServletRequest.getSession();
 
         // Get User from session
         User user = (User)session.getAttribute("user");
         System.out.println(user);
-
-        System.out.println(checkDir);
 
         Path path = Paths.get(STORAGE + "/" + user.getId());
         if (!path.toFile().exists() && checkDir) {
@@ -57,9 +53,14 @@ public class FilesController {
         List<FileItem> result = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
             stream.forEach(p -> {
-                if (!p.toFile().isDirectory()) {
-                    result.add(new FileItem(0L, p.getFileName().toString()));
-                    System.out.println(p.getFileName());
+                if (!Files.isDirectory(p)) {
+                    try {
+                        FileItem item = new FileItem(0L, p.getFileName().toString(), Files.size(p), Files.probeContentType(p));
+                        System.out.println(item);
+                        result.add(item);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         } catch (IOException e) {
