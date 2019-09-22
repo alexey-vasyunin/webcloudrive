@@ -2,11 +2,13 @@ package ru.vasyunin.springcloudrive.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.service.UserService;
+import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -31,6 +33,7 @@ public class FilesController {
 
 //    @Secured({"ADMIN"})
 //    @PostMapping("/api/filelist")
+//    @PreAuthorize()
     @GetMapping("/api/filelist")
     public List<FileItem> getFileListFromStorage(HttpServletRequest httpServletRequest){
         HttpSession session = httpServletRequest.getSession();
@@ -55,7 +58,7 @@ public class FilesController {
             stream.forEach(p -> {
                 if (!Files.isDirectory(p)) {
                     try {
-                        FileItem item = new FileItem(0L, p.getFileName().toString(), Files.size(p), Files.probeContentType(p));
+                        FileItem item = new FileItem(0L, p.getFileName().toString(), Files.size(p), FileUtils.getFileExtension(p));
                         System.out.println(item);
                         result.add(item);
                     } catch (IOException e) {
