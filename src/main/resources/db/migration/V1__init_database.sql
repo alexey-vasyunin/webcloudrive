@@ -25,8 +25,11 @@ alter table users owner to cloudrive;
 create unique index users_id_uindex on users (id);
 create unique index users_username_uindex on users (username);
 
-INSERT INTO users (id, username, password, firstname, lastname, photourl, isactive, isexpiried, created, lastseen) VALUES (1, 'user', '$2a$10$ZeChEN0IJW602heKK/T50OVYyhYGsWtgJ6tcvgSf39V6D7sVqaacC', 'Alexey', 'Vasyunin', null, true, false, '2019-09-11 10:04:38.674912', null);
-INSERT INTO roles (role_id, role_name) VALUES (1, 'ADMIN');
-INSERT INTO roles (role_id, role_name) VALUES (2, 'USER');
-INSERT INTO roles (role_id, role_name) VALUES (3, 'MANAGER');
+create table users_roles
+(
+    user_id integer not null constraint users_roles_users_id_fk references users,
+    role_id integer not null constraint users_roles_roles_role_id_fk references roles
+);
+
+alter table users_roles owner to cloudrive;
 
