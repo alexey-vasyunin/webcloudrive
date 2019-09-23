@@ -1,3 +1,5 @@
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 create table users
 (
     id serial constraint users_pk primary key,
@@ -32,4 +34,40 @@ create table users_roles
 );
 
 alter table users_roles owner to cloudrive;
+
+create table filetypes
+(
+    type_id serial not null constraint filetypes_pk primary key,
+    name varchar(255) not null
+);
+
+alter table filetypes owner to cloudrive;
+create unique index filetypes_name_uindex on filetypes (name);
+create unique index filetypes_type_id_uindex on filetypes (type_id);
+
+create table directories
+(
+    id bigserial not null constraint directories_pk primary key,
+    dirname varchar(255) not null,
+    parent integer constraint directories_directories_id_fk references directories,
+    user_id integer not null constraint directories_users_id_fk references users
+);
+
+alter table directories owner to cloudrive;
+
+create table files
+(
+    file_id bigserial not null constraint files_pk primary key,
+    filename varchar(36) default uuid_generate_v4(),
+    origin_filename varchar(255) not null,
+    user_id integer not null constraint files_users_id_fk references users,
+    filesize integer not null,
+    filetype varchar(255) not null,
+    directory_id integer constraint files_directories_id_fk references directories,
+    last_modified timestamp not null
+);
+
+alter table files owner to cloudrive;
+
+create unique index files_file_id_uindex on files (file_id);
 
