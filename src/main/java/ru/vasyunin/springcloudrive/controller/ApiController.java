@@ -1,89 +1,116 @@
 package ru.vasyunin.springcloudrive.controller;
 
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.vasyunin.springcloudrive.dto.FileItemTDO;
+import ru.vasyunin.springcloudrive.entity.DirectoryItem;
 import ru.vasyunin.springcloudrive.entity.User;
+import ru.vasyunin.springcloudrive.service.DirectoryService;
+import ru.vasyunin.springcloudrive.service.FilesService;
+import ru.vasyunin.springcloudrive.service.RoleService;
 import ru.vasyunin.springcloudrive.service.UserService;
-import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
 public class ApiController {
-    private UserService userService;
+    private final UserService userService;
+    private final FilesService filesService;
+    private final DirectoryService directoryService;
+    private final RoleService roleService;
 
-    @Value("${cloudrive.storage.directory}")
-    private String STORAGE;
-
-    @Value("${cloudrive.storage.create_if_not_exists}")
-    private boolean checkDir;
-
-//    @Secured({"ADMIN"})
-//    @PreAuthorize()
-
+    @Autowired
+    public ApiController(UserService userService, FilesService filesService, DirectoryService directoryService, RoleService roleService) {
+        this.userService = userService;
+        this.filesService = filesService;
+        this.directoryService = directoryService;
+        this.roleService = roleService;
+    }
 
     /**
      * Getting list of files from user's directory
      * @return
      */
-    @PostMapping("/filelist")
-    public List<FileItemTDO> getFileListFromStorage(HttpServletRequest httpServletRequest){
+    @PostMapping("/filelist/directory/{id}")
+    public List<FileItemTDO> getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId, HttpServletRequest httpServletRequest){
         HttpSession session = httpServletRequest.getSession();
 
         // Get User from session
         User user = (User)session.getAttribute("user");
 
-        Path path = Paths.get(STORAGE + "/" + user.getId());
-        if (!path.toFile().exists() && checkDir) {
-            try {
-                Files.createDirectories(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        // Get current directory (root or required)
+        DirectoryItem currentDirectory;
+
+        if (dirId == null || dirId == 0){
+            currentDirectory = directoryService.getDirectoryByParent(user, null);
+        } else {
+            currentDirectory = directoryService.getDirectoryById(user, dirId);
         }
 
+        if (currentDirectory == null) return Collections.emptyList();
+
         List<FileItemTDO> result = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
-            stream.forEach(p -> {
-                if (!Files.isDirectory(p)) {
-                    try {
-                        // Creating FileItem DTO
-                        FileItemTDO item = new FileItemTDO(0L,
-                                p.getFileName().toString(),
-                                Files.size(p),
-                                FileUtils.getFileExtension(p),
-                                LocalDateTime.ofInstant(Files.getLastModifiedTime(p).toInstant(), ZoneId.systemDefault()));
-                        result.add(item);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        // If parent directory exists show it as ".."
+        if (currentDirectory.getParent() != null){
+            result.add(new FileItemTDO(currentDirectory.getParentId(), "..", 0, "", null, true));
         }
+
+        // Add subdirectories to response
+        result.addAll(currentDirectory.getSubdirs().stream()
+                .map(dir -> {
+                    return new FileItemTDO(dir.getId(), dir.getName(), 0L, null, null, true);
+                }).collect(Collectors.toList()));
+
+        // Add filelist to response
+        result.addAll(currentDirectory.getFiles().stream()
+                .map(file -> {
+                    return new FileItemTDO(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
+                }).collect(Collectors.toList()));
+
         return result;
     }
 
 
-
-    @Autowired
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
 }
+
+//
+//        Path path = Paths.get(STORAGE + "/" + user.getId());
+//        if (!path.toFile().exists() && checkDir) {
+//            try {
+//                Files.createDirectories(path);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        List<FileItemTDO> result = new ArrayList<>();
+//        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
+//            stream.forEach(p -> {
+//                if (!Files.isDirectory(p)) {
+//                    try {
+//                        // Creating FileItem DTO
+//                        FileItemTDO item = new FileItemTDO(0L,
+//                                p.getFileName().toString(),
+//                                Files.size(p),
+//                                FileUtils.getFileExtension(p),
+//                                LocalDateTime.ofInstant(Files.getLastModifiedTime(p).toInstant(), ZoneId.systemDefault()));
+//                        result.add(item);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            });
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }

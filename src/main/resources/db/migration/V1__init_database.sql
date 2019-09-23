@@ -49,7 +49,7 @@ create table directories
 (
     id bigserial not null constraint directories_pk primary key,
     dirname varchar(255) not null,
-    parent integer default 0 constraint directories_directories_id_fk references directories,
+    parent integer constraint directories_directories_id_fk references directories,
     user_id integer not null constraint directories_users_id_fk references users
 );
 
@@ -59,10 +59,12 @@ create table files
 (
     file_id bigserial not null constraint files_pk primary key,
     filename varchar(36) default uuid_generate_v4(),
+    origin_filename varchar(255) not null,
     user_id integer not null constraint files_users_id_fk references users,
     filesize integer not null,
     filetype varchar(255) not null,
-    directory_id integer constraint files_directories_id_fk references directories
+    directory_id integer constraint files_directories_id_fk references directories,
+    last_modified timestamp not null
 );
 
 alter table files owner to cloudrive;

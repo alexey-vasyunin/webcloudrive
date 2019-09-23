@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -24,10 +23,25 @@ public class DirectoryItem {
     @JoinColumn(name = "parent", nullable = true)
     private DirectoryItem parent;
 
+    @Column(name = "parent", insertable = false, updatable = false)
+    private Long parentId;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parent")
+    private List<DirectoryItem> subdirs;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "directory")
     private List<FileItem> files;
+
+    @Override
+    public String toString() {
+        return "DirectoryItem{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", parentId=" + parentId +
+                '}';
+    }
 }

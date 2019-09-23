@@ -44,25 +44,49 @@
     // row
     //     .append("")
 
-
+function filelistLoad(directoryId) {
     let headers = {};
     headers[header] = token;
+    if (directoryId === undefined) directoryId = "0";
+
     $.ajax({
             type: 'post',
-            url: '/api/filelist',
+            url: '/api/filelist/directory/' + directoryId,
             headers: headers,
             success: function (data) {
+                console.log(data);
+
+                $(document).off('click', 'tr.directoryitem');
+                $("#fileTable tbody tr").remove();
+
                 data.forEach(function (file) {
-                    let row = $("<tr fileid='" + file.id + "'>")
-                        .append('<td>' + file.filename + '</td>')
-                        .append('<td>' + file.dateModified + '</td>')
-                        .append('<td>' + file.type + '</td>')
-                        .append('<td>' + file.size + '</td>')
-                        .append('</tr>');
+                    let row;
+                    if (file.directory) {
+                        row = $("<tr itemid='" + file.id + "'  class=\"directoryitem\">")
+                            .append('<td>' + file.filename + '</td>')
+                            .append('<td>&nbsp;</td>')
+                            .append('<td>&nbsp;</td>')
+                            .append('<td>&nbsp;</td>')
+                            .append('</tr>');
+                    } else {
+                        row = $("<tr itemid='" + file.id + "'>")
+                            .append('<td class="fileitem">' + file.filename + '</td>')
+                            .append('<td>' + file.dateModified + '</td>')
+                            .append('<td>' + file.type + '</td>')
+                            .append('<td>' + file.size + '</td>')
+                            .append('</tr>');
+                    }
                     $("#fileTable").append(row);
+                });
+
+                $(document).on('click', 'tr.directoryitem', function (event) {
+                    filelistLoad($(this).attr("itemid"));
                 });
             }
         }
     );
+}
+filelistLoad();
+
 
 })(jQuery); // End of use strict

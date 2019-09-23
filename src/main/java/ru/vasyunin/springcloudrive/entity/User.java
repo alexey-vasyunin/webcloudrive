@@ -48,6 +48,12 @@ public class User {
 
     private List<Role> roles;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private List<DirectoryItem> directories;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private List<FileItem> files;
+
     /**
      * Check if user has the role
      * @param role String Name of role

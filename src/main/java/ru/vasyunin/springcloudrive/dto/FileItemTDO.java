@@ -3,24 +3,24 @@ package ru.vasyunin.springcloudrive.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
 public class FileItemTDO {
-    private Long id;
-    private String filename;
-    private long size;
-    private String type;
-    private LocalDateTime dateModified;
+    private final Long id;
+    private final String filename;
+    private final Long size;
+    private final String type;
+    private final LocalDateTime dateModified;
+    private final boolean isDirectory;
 
-    public FileItemTDO(Long id, String filename, long size, String type, LocalDateTime dateModified) {
+    public FileItemTDO(Long id, String filename, long size, String type, LocalDateTime dateModified, boolean isDirectory) {
         this.id = id;
         this.filename = filename;
         this.size = size;
         this.type = type;
         this.dateModified = dateModified;
+        this.isDirectory = isDirectory;
     }
 
     @Override
