@@ -57,6 +57,7 @@ function filelistLoad(directoryId) {
                 console.log(data);
 
                 $(document).off('click', 'tr.directoryitem');
+                $(document).off('click', 'tr.fileitem');
                 $("#fileTable tbody tr").remove();
 
                 data.forEach(function (file) {
@@ -69,8 +70,8 @@ function filelistLoad(directoryId) {
                             .append('<td>&nbsp;</td>')
                             .append('</tr>');
                     } else {
-                        row = $("<tr itemid='" + file.id + "'>")
-                            .append('<td class="fileitem">' + file.filename + '</td>')
+                        row = $("<tr itemid='" + file.id + "' class=\"fileitem\">>")
+                            .append('<td>' + file.filename + '</td>')
                             .append('<td>' + file.dateModified + '</td>')
                             .append('<td>' + file.type + '</td>')
                             .append('<td>' + file.size + '</td>')
@@ -81,6 +82,9 @@ function filelistLoad(directoryId) {
 
                 $(document).on('click', 'tr.directoryitem', function (event) {
                     filelistLoad($(this).attr("itemid"));
+                });
+                $(document).on('click', 'tr.fileitem', function (event) {
+                    window.location = '/file/download/' + $(this).attr("itemid");
                 });
             }
         }
