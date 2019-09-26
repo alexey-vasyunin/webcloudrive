@@ -210,8 +210,11 @@
         <!-- DataTables Example -->
         <div class="card mb-3">
           <div class="card-header">
-            <i class="fas fa-table"></i>
-            Ваши файлы</div>
+            <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
+              <div><i class="fas fa-table"></i> Ваши файлы</div>
+              <div><button class="btn btn-outline-primary btn-sm" id="uploadbutton"><i class="fas fa-upload"></i></button></div>
+            </div>
+          </div>
           <div class="card-body">
             <div class="table-responsive">
               <table class="table table-bordered" id="fileTable" width="100%" cellspacing="0">
@@ -223,14 +226,6 @@
                   <th>Размер</th>
                 </tr>
                 </thead>
-                <tfoot>
-                <tr>
-                  <th>Имя файла</th>
-                  <th>Дата изменения</th>
-                  <th>Тип</th>
-                  <th>Размер</th>
-                </tr>
-                </tfoot>
                 <tbody>
                 </tbody>
               </table>
@@ -288,12 +283,15 @@
         <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-          <a class="btn btn-primary" href="login.html">Logout</a>
+          <a class="btn btn-primary" href="/logout">Logout</a>
         </div>
       </div>
     </div>
   </div>
 
+  <form name="uploadfile">
+    <input name="fileup" type="file" id="fileup" style="display: none;"/>
+  </form>
   <!-- Bootstrap core JavaScript-->
   <script th:src="@{vendor/jquery/jquery.min.js}"></script>
   <script th:src="@{vendor/bootstrap/js/bootstrap.bundle.min.js}"></script>
@@ -312,6 +310,8 @@
   <!-- Demo scripts for this page-->
   <script th:src="@{js/demo/datatables-demo.js}"></script>
   <script th:src="@{js/demo/chart-area-demo.js}"></script>
+
+  <script th:src="@{js/resumablejs/resumable.js}"></script>
 
 </body>
 

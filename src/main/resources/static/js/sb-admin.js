@@ -40,9 +40,9 @@
         event.preventDefault();
     });
 
-    // let row = $("<tr>");
-    // row
-    //     .append("")
+    $(document).on('click', '#uploadbutton', function (event) {
+        $("#fileup").click();
+    });
 
 function filelistLoad(directoryId) {
     let headers = {};
@@ -92,5 +92,14 @@ function filelistLoad(directoryId) {
 }
 filelistLoad();
 
+    var r = new Resumable({
+        target: '/api/upload/chunks',
+        query:  {
+            upload_token: 'my_token'
+        }
+    });
+
+    // r.assignBrowse(document.getElementById('browseButton'));
+    // r.assignDrop(document.getElementById('dropTarget'));
 
 })(jQuery); // End of use strict

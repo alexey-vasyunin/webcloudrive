@@ -10913,6 +10913,10 @@ body.sidebar-toggled footer.sticky-footer {
   }
 }
 
+.fileitem {
+  cursor: pointer;
+}
+
 .directoryitem {
   font-weight: bold;
   cursor: pointer;
