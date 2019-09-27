@@ -1,11 +1,11 @@
 package ru.vasyunin.springcloudrive.controller;
 
+import com.sun.deploy.net.HttpResponse;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import ru.vasyunin.springcloudrive.dto.FileItemTDO;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
 import ru.vasyunin.springcloudrive.entity.User;
@@ -79,6 +79,13 @@ public class ApiController {
                 }).collect(Collectors.toList()));
 
         return result;
+    }
+
+    @PostMapping("/upload/chunk")
+    public ResponseEntity uploadChunkOfFile(HttpServletRequest request){
+        System.out.println(request);
+
+        return new ResponseEntity(HttpStatus.OK);
     }
 
 

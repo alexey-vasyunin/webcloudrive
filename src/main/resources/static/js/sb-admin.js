@@ -92,14 +92,28 @@ function filelistLoad(directoryId) {
 }
 filelistLoad();
 
-    var r = new Resumable({
-        target: '/api/upload/chunks',
+    let r = new Resumable({
+        target: '/api/upload/chunk',
         query:  {
             upload_token: 'my_token'
         }
     });
 
-    // r.assignBrowse(document.getElementById('browseButton'));
-    // r.assignDrop(document.getElementById('dropTarget'));
+    r.assignBrowse(document.getElementById('fileup'));
+    r.assignDrop(document.getElementById('content-wrapper'));
+
+    r.on('fileAdded', function(file){
+        console.log("fileAdded");
+        console.log(file);
+        r.upload();
+    });
+    r.on('fileSuccess', function(file,message){
+        console.log("fileSuccess");
+        console.log(file, message);
+    });
+    r.on('fileError', function(file, message){
+        console.log("fileError");
+        console.log(file, message);
+    });
 
 })(jQuery); // End of use strict
