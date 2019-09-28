@@ -39,6 +39,9 @@ public class FileItem {
     @Column(name = "last_modified")
     private LocalDateTime last_modified;
 
+    @Column(name = "is_completed")
+    private boolean isCompleted;
+
     @Override
     public String toString() {
         return "FileItem{" +

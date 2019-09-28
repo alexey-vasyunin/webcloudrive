@@ -60,7 +60,7 @@ function filelistLoad(directoryId) {
                 $(document).off('click', 'tr.fileitem');
                 $("#fileTable tbody tr").remove();
 
-                data.forEach(function (file) {
+                data.content.forEach(function (file) {
                     let row;
                     if (file.directory) {
                         row = $("<tr itemid='" + file.id + "'  class=\"directoryitem\">")
@@ -78,7 +78,10 @@ function filelistLoad(directoryId) {
                             .append('</tr>');
                     }
                     $("#fileTable").append(row);
+                    // Need to change Resumable query to current directory
                 });
+
+                $("#fileTable").attr("directory", data.currentDirectory);
 
                 $(document).on('click', 'tr.directoryitem', function (event) {
                     filelistLoad($(this).attr("itemid"));
@@ -92,11 +95,14 @@ function filelistLoad(directoryId) {
 }
 filelistLoad();
 
-    let r = new Resumable({
+    var r = new Resumable({
         target: '/api/upload/chunk',
         query:  {
-            upload_token: 'my_token'
-        }
+            upload_token: 'my_token',
+            directory: $("#fileTable").attr("directory")
+        },
+        chunkSize: 1024*128,
+        testChunks: false
     });
 
     r.assignBrowse(document.getElementById('fileup'));

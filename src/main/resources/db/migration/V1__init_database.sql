@@ -64,7 +64,8 @@ create table files
     filesize integer not null,
     filetype varchar(255) not null,
     directory_id integer constraint files_directories_id_fk references directories,
-    last_modified timestamp not null
+    last_modified timestamp not null,
+    is_completed boolean default false
 );
 
 alter table files owner to cloudrive;
