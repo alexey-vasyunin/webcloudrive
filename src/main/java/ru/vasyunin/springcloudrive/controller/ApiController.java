@@ -1,13 +1,12 @@
 package ru.vasyunin.springcloudrive.controller;
 
-import com.sun.deploy.net.HttpResponse;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.vasyunin.springcloudrive.FileChunks;
+import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
+import ru.vasyunin.springcloudrive.utils.FileChunks;
 import ru.vasyunin.springcloudrive.dto.FileItemTDO;
 import ru.vasyunin.springcloudrive.dto.FilelistDTO;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
@@ -22,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,27 +61,10 @@ public class ApiController {
             currentDirectory = directoryService.getDirectoryById(user, dirId);
         }
 
-        if (currentDirectory == null) return new FilelistDTO(Collections.emptyList(), dirId);
+        if (currentDirectory == null)
+            return new FilelistDTO(Collections.emptyList(), dirId);
 
-        List<FileItemTDO> result = new ArrayList<>();
-
-        // If parent directory exists show it as ".."
-        if (currentDirectory.getParent() != null){
-            result.add(new FileItemTDO(currentDirectory.getParentId(), "..", 0, "", null, true));
-        }
-
-        // Add subdirectories to response
-        result.addAll(currentDirectory.getSubdirs().stream()
-                .map(dir -> {
-                    return new FileItemTDO(dir.getId(), dir.getName(), 0L, null, null, true);
-                }).collect(Collectors.toList()));
-
-        // Add filelist to response
-        result.addAll(currentDirectory.getFiles().stream()
-                .filter(FileItem::isCompleted)
-                .map(file -> {
-                    return new FileItemTDO(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
-                }).collect(Collectors.toList()));
+        List<FileItemTDO> result = filesService.getFilelistByDirectory(currentDirectory);
 
         return new FilelistDTO(result, dirId);
     }
@@ -93,38 +74,32 @@ public class ApiController {
                                             HttpServletRequest request,
                                             HttpSession session) throws IOException {
 
+        // Get information about downloaded chunks
         FileChunks chunks = (FileChunks) session.getAttribute("chunks");
         if (chunks == null){
             chunks = new FileChunks();
         }
 
+        FileChunkInfo chunkInfo;
+
         try {
-            chunks.addChunk(file.getOriginalFilename(), Long.parseLong(request.getParameter("resumableChunkNumber")));
-            int resumableChunkSize = Integer.parseInt(request.getParameter("resumableChunkSize"), -1);
-            long resumableTotalSize = Long.parseLong(request.getParameter("resumableTotalSize"), -1);
-
-            if (chunks.isDone(file.getOriginalFilename(), (long) Math.ceil((double) (resumableTotalSize / resumableChunkSize)))){
-                //
-                System.out.println("File is done!");
-            }
-
+            chunkInfo =  new FileChunkInfo(request);
         } catch (NumberFormatException e){
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
 
+        chunks.addChunk(file.getOriginalFilename(), chunkInfo);
+
+        if (chunks.isDone(file.getOriginalFilename(), chunkInfo)){
+            //
+            System.out.println("File is done!");
+        }
+
 
 
         System.out.println("===============");
-        System.out.println(request);
-        System.out.println(file);
-        System.out.println("getOriginalFilename " + file.getOriginalFilename());
-        System.out.println("getSize " + file.getSize());
-        System.out.println("getBytes " + file.getBytes().length);
-        System.out.println("isEmpty " + file.isEmpty());
-        System.out.println("getName " + file.getName());
-        System.out.println("resumableChunkNumber " + request.getParameter("resumableChunkNumber"));
-        System.out.println("resumableIdentifier " + request.getParameter("resumableIdentifier"));
+        System.out.println(chunkInfo);
         System.out.println("===============");
         return new ResponseEntity(HttpStatus.OK);
     }

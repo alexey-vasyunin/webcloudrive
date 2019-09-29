@@ -1,4 +1,4 @@
-package ru.vasyunin.springcloudrive;
+package ru.vasyunin.springcloudrive.utils;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,6 +28,10 @@ public class FileChunks {
                 .count() == max;
     }
 
+    public boolean isDone(String filename, FileChunkInfo fileChunkInfo){
+        return isDone(filename, fileChunkInfo.getTotalChunks());
+    }
+
     /**
      * Store information about chunk of file
      * @param filename Name of file
@@ -36,6 +40,10 @@ public class FileChunks {
      */
     public boolean addChunk(String filename, Long chunkNumber){
         return chunks.putIfAbsent(filename, chunkNumber) == null;
+    }
+
+    public boolean addChunk(String filename, FileChunkInfo fileChunkInfo){
+        return addChunk(filename, fileChunkInfo.getChunkNumber());
     }
 
     /**
