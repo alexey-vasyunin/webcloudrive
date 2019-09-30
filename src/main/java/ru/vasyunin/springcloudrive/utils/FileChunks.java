@@ -1,7 +1,9 @@
 package ru.vasyunin.springcloudrive.utils;
 
+import javax.persistence.GeneratedValue;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -9,27 +11,61 @@ import java.util.stream.Collectors;
  * Class for storing information about downloaded chunks of files
  */
 public class FileChunks {
-    private HashMap<String, Long> chunks;
+
+    public static class Chunk {
+        public String id;
+        public long chunkNumber;
+
+        public Chunk(String id, long chunkNumber) {
+            this.id = id;
+            this.chunkNumber = chunkNumber;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Chunk chunk = (Chunk) o;
+
+            if (chunkNumber != chunk.chunkNumber) return false;
+            return id.equals(chunk.id);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id.hashCode();
+            result = 31 * result + (int) (chunkNumber ^ (chunkNumber >>> 32));
+            return result;
+        }
+    }
+
+    private HashSet<Chunk> chunks;
 
     public FileChunks() {
-        chunks = new HashMap<>();
+        chunks = new HashSet<>();
     }
 
     /**
      * Check if number of stored chunks equals max number of chunk for file
-     * @param filename Filename
+     * @param id Filename
      * @param max Maximum chunk number
      * @return {@code true} if all chunks is downloaded
      */
-    public boolean isDone(String filename, long max){
-        if (filename == null || "".equals(filename)) return false;
-        return chunks.entrySet().stream()
-                .filter(chunk -> filename.equals(chunk.getKey()))
-                .count() == max;
+    public boolean isDone(String id, long max){
+        if (id == null || "".equals(id)) return false;
+        long count = chunks.stream()
+                .filter(chunk -> id.equals(chunk.id))
+                .count();
+        return count == max;
     }
 
     public boolean isDone(String filename, FileChunkInfo fileChunkInfo){
         return isDone(filename, fileChunkInfo.getTotalChunks());
+    }
+
+    public boolean isDone(FileChunkInfo fileChunkInfo){
+        return isDone(fileChunkInfo.getIdentifier(), fileChunkInfo.getTotalChunks());
     }
 
     /**
@@ -39,25 +75,28 @@ public class FileChunks {
      * @return {@code true} if chunk didn't present in the hash storage
      */
     public boolean addChunk(String filename, Long chunkNumber){
-        return chunks.putIfAbsent(filename, chunkNumber) == null;
+        Chunk chunk = new Chunk(filename, chunkNumber);
+        System.out.println(chunk.hashCode());
+        return chunks.add(chunk);
     }
 
     public boolean addChunk(String filename, FileChunkInfo fileChunkInfo){
         return addChunk(filename, fileChunkInfo.getChunkNumber());
     }
 
+    public boolean addChunk(FileChunkInfo fileChunkInfo){
+        return addChunk(fileChunkInfo.getIdentifier(), fileChunkInfo.getChunkNumber());
+    }
     /**
      * Clean all information about file chunks from memory
-     * @param filename Uniq name of file
+     * @param id Uniq name of file
      */
-    public void cleanByFilename(String filename){
-        chunks.entrySet().stream()
-                .filter(chunks->filename.equals(chunks.getKey()))
-                .forEach(s -> chunks.remove(s.getKey()));
+    public void cleanByFilename(String id){
+        chunks.removeIf(chunk -> id.equals(chunk.id));
     }
 
     @Override
     public String toString() {
-        return "FileChunks: " + chunks.entrySet().stream().sorted().map(s -> s.getKey() + ": " + s.getValue()).collect(Collectors.joining(System.lineSeparator()));
+        return "FileChunks: " + chunks.stream().map(s -> s.id + ": " + s.chunkNumber).collect(Collectors.joining(System.lineSeparator()));
     }
 }

@@ -1,1 +1,18 @@
-[]
+{
+  "properties": [
+    {
+      "name": "cloudrive.storage.directory",
+      "type": "java.lang.String",
+      "description": "Path to common storage folder"
+    },
+    {
+      "name": "cloudrive.storage.create_if_not_exists",
+      "type": "java.lang.String",
+      "description": "Create user's subfolder into storage (true or false)"
+    },
+    {
+      "name": "cloudrive.storage.tempfilder",
+      "type": "java.lang.String",
+      "description": "Name of subfolder in user's directory for saveing chunks of files"
+    }
+  ] }

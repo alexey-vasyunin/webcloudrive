@@ -102,7 +102,8 @@ filelistLoad();
             directory: $("#fileTable").attr("directory")
         },
         chunkSize: 1024*128,
-        testChunks: false
+        testChunks: false,
+        simultaneousUploads: 1
     });
 
     r.assignBrowse(document.getElementById('fileup'));

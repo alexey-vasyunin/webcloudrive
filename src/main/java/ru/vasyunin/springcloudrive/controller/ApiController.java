@@ -1,6 +1,9 @@
 package ru.vasyunin.springcloudrive.controller;
 
+import com.sun.deploy.net.HttpResponse;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +19,21 @@ import ru.vasyunin.springcloudrive.service.DirectoryService;
 import ru.vasyunin.springcloudrive.service.FilesService;
 import ru.vasyunin.springcloudrive.service.RoleService;
 import ru.vasyunin.springcloudrive.service.UserService;
+import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.xml.ws.http.HTTPException;
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,6 +43,12 @@ public class ApiController {
     private final FilesService filesService;
     private final DirectoryService directoryService;
     private final RoleService roleService;
+
+    @Value("${cloudrive.storage.directory}")
+    private String STORAGE;
+
+    @Value("${cloudrive.storage.tempfilder}")
+    private String TEMP_FOLDER;
 
     @Autowired
     public ApiController(UserService userService, FilesService filesService, DirectoryService directoryService, RoleService roleService) {
@@ -46,9 +63,7 @@ public class ApiController {
      * @return
      */
     @PostMapping("/filelist/directory/{id}")
-    public FilelistDTO getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId, HttpServletRequest httpServletRequest){
-        HttpSession session = httpServletRequest.getSession();
-
+    public FilelistDTO getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId, HttpSession session){
         // Get User from session
         User user = (User)session.getAttribute("user");
 
@@ -74,29 +89,36 @@ public class ApiController {
                                             HttpServletRequest request,
                                             HttpSession session) throws IOException {
 
+        // Get User from session
+        User user = (User)session.getAttribute("user");
+
         // Get information about downloaded chunks
         FileChunks chunks = (FileChunks) session.getAttribute("chunks");
         if (chunks == null){
             chunks = new FileChunks();
+            session.setAttribute("chunks", chunks);
         }
 
-        FileChunkInfo chunkInfo;
+        // Get info about chunk from request
+        FileChunkInfo chunkInfo = new FileChunkInfo(request);
 
-        try {
-            chunkInfo =  new FileChunkInfo(request);
-        } catch (NumberFormatException e){
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        Path tempPath = FileUtils.createSubfolder(STORAGE + File.separator + user.getId() + File.separator + TEMP_FOLDER).orElseThrow(() -> {
+            return new HTTPException(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        });
+
+        String temp_file = tempPath.toAbsolutePath().toString() + File.separator + UUID.nameUUIDFromBytes(chunkInfo.getIdentifier().getBytes());
+        try (RandomAccessFile raf = new RandomAccessFile(temp_file, "rw")){
+            raf.seek(chunkInfo.getOffset());
+            raf.write(file.getBytes());
+            chunks.addChunk(chunkInfo);
         }
 
-        chunks.addChunk(file.getOriginalFilename(), chunkInfo);
 
-        if (chunks.isDone(file.getOriginalFilename(), chunkInfo)){
-            //
-            System.out.println("File is done!");
+
+        if (chunks.isDone(chunkInfo)){
+            //TODO: move to normal filename & add to db
+            Files.move(Paths.get(temp_file), Paths.get(STORAGE + File.separator + user.getId() + File.separator + "111111"));
         }
-
-
 
         System.out.println("===============");
         System.out.println(chunkInfo);
