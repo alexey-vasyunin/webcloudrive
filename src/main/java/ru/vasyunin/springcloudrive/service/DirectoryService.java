@@ -32,5 +32,8 @@ public class DirectoryService {
         return directoryRepository.findDirectoryItemByUserAndId(user, id);
     }
 
+    public DirectoryItem getRootDirectory(User user){
+        return directoryRepository.findDirectoryItemByUserAndParentIsNull(user);
+    }
 
 }

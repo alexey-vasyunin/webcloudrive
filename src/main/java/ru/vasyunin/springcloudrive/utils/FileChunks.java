@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 public class FileChunks {
 
     public static class Chunk {
-        public String id;
-        public long chunkNumber;
+        public final String id;
+        public final long chunkNumber;
 
         public Chunk(String id, long chunkNumber) {
             this.id = id;
@@ -61,11 +61,11 @@ public class FileChunks {
     }
 
     public boolean isDone(String filename, FileChunkInfo fileChunkInfo){
-        return isDone(filename, fileChunkInfo.getTotalChunks());
+        return isDone(filename, fileChunkInfo.totalChunks);
     }
 
     public boolean isDone(FileChunkInfo fileChunkInfo){
-        return isDone(fileChunkInfo.getIdentifier(), fileChunkInfo.getTotalChunks());
+        return isDone(fileChunkInfo.identifier, fileChunkInfo.totalChunks);
     }
 
     /**
@@ -81,11 +81,11 @@ public class FileChunks {
     }
 
     public boolean addChunk(String filename, FileChunkInfo fileChunkInfo){
-        return addChunk(filename, fileChunkInfo.getChunkNumber());
+        return addChunk(filename, fileChunkInfo.chunkNumber);
     }
 
     public boolean addChunk(FileChunkInfo fileChunkInfo){
-        return addChunk(fileChunkInfo.getIdentifier(), fileChunkInfo.getChunkNumber());
+        return addChunk(fileChunkInfo.identifier, fileChunkInfo.chunkNumber);
     }
     /**
      * Clean all information about file chunks from memory

@@ -5,25 +5,27 @@ import lombok.Getter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.*;
+import java.util.UUID;
 
-@Getter
 public class FileChunkInfo {
-    private final int chunkSize;
-    private final long totalSize;
-    private final String identifier;
-    private final String filename;
-    private final String relativePath;
-    private final long chunkNumber;
-    private final int totalChunks;
-    private final long offset;
+    public final int chunkSize;
+    public final long totalSize;
+    public final String identifier;
+    public final String filename;
+    public final long relativePath;
+    public final long chunkNumber;
+    public final int totalChunks;
+    public final long offset;
+    public final String localFilename;
 
     public FileChunkInfo(HttpServletRequest request) {
         chunkSize = Integer.parseInt(request.getParameter("resumableChunkSize"));
         totalSize = Long.parseLong(request.getParameter("resumableTotalSize"));
         chunkNumber = Long.parseLong(request.getParameter("resumableChunkNumber"));
+        relativePath = Long.parseLong(request.getParameter("resumableRelativePath"));
         identifier = request.getParameter("resumableIdentifier");
         filename = request.getParameter("resumableFilename");
-        relativePath = request.getParameter("resumableRelativePath");
+        localFilename = UUID.nameUUIDFromBytes((identifier + relativePath).getBytes()).toString();
         totalChunks = (int) Math.ceil(((double)(totalSize/ chunkSize)));
         offset = (chunkNumber - 1) * chunkSize;
     }

@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface DirectoryRepository extends JpaRepository<DirectoryItem, Long> {
+    DirectoryItem findDirectoryItemByUserAndParentIsNull(User user);
     DirectoryItem findDirectoryItemByUserAndParentId(User user, Long parentId);
     DirectoryItem findDirectoryItemByUserAndId(User user, long id);
 }

@@ -3,8 +3,11 @@ package ru.vasyunin.springcloudrive.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.multipart.MultipartFile;
 import ru.vasyunin.springcloudrive.dto.FileItemTDO;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
 import ru.vasyunin.springcloudrive.entity.FileItem;
@@ -12,14 +15,20 @@ import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.repository.DirectoryRepository;
 import ru.vasyunin.springcloudrive.repository.FilesRepository;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
+import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
+import ru.vasyunin.springcloudrive.utils.FileChunks;
+import ru.vasyunin.springcloudrive.utils.FileUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,7 +61,7 @@ public class FilesService {
         File file = new File(STORAGE + File.separator + user.getId() + File.separator  + fileItem.getFilename());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileItem.getOriginFilename() + "." + fileItem.getType())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileItem.getOriginFilename())
                 .contentLength(file.length())
                 .body(resource);
     }
@@ -85,4 +94,56 @@ public class FilesService {
 
         return result;
     }
+
+    /**
+     * Function creates record in database about file (isComplited = false)
+     * @param user
+     * @param chunkInfo
+     * @return FileItem object of file
+     */
+    public FileItem processChunkInDb(User user, FileChunkInfo chunkInfo){
+        DirectoryItem dir = directoryRepository.findDirectoryItemByUserAndId(user, chunkInfo.relativePath);
+        if (dir == null)
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
+
+        FileItem item = filesRepository.findFileItemByUserAndAndDirectoryAndFilename(user, dir, chunkInfo.localFilename);
+        if (item != null) {
+            if (!item.isCompleted()) return item;
+            throw new HttpClientErrorException(HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        item = new FileItem();
+        item.setCompleted(false);
+        item.setOriginFilename(chunkInfo.filename);
+        item.setFilename(chunkInfo.localFilename);
+        item.setSize(chunkInfo.totalSize);
+        item.setUser(user);
+        item.setLast_modified(LocalDateTime.now());
+        item.setDirectory(dir);
+        item.setType(FileUtils.getFileExtension(chunkInfo.filename));
+        return filesRepository.save(item);
+    }
+
+    /**
+     * Function adds chunk to target file
+     * @param user
+     * @param chunkInfo
+     * @param file
+     */
+    public void processChunk(User user, FileChunkInfo chunkInfo, MultipartFile file){
+        String filename = STORAGE + File.separator + user.getId() + File.separator + chunkInfo.localFilename;
+        try (RandomAccessFile raf = new RandomAccessFile(filename, "rw")){
+            raf.seek(chunkInfo.offset);
+            raf.write(file.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public void setFileComplited(FileItem fileItem){
+        fileItem.setCompleted(true);
+        filesRepository.saveAndFlush(fileItem);
+    }
+
 }

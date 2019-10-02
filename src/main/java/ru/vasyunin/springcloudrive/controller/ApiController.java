@@ -1,19 +1,17 @@
 package ru.vasyunin.springcloudrive.controller;
 
-import com.sun.deploy.net.HttpResponse;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileChunks;
 import ru.vasyunin.springcloudrive.dto.FileItemTDO;
 import ru.vasyunin.springcloudrive.dto.FilelistDTO;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
-import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.service.DirectoryService;
 import ru.vasyunin.springcloudrive.service.FilesService;
@@ -26,15 +24,9 @@ import javax.servlet.http.HttpSession;
 import javax.xml.ws.http.HTTPException;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -86,43 +78,35 @@ public class ApiController {
 
     @PostMapping("/upload/chunk")
     public ResponseEntity uploadChunkOfFile(@RequestParam("file") MultipartFile file,
+                                            @RequestParam("resumableRelativePath") long directory,
                                             HttpServletRequest request,
-                                            HttpSession session) throws IOException {
+                                            HttpSession session) {
 
         // Get User from session
         User user = (User)session.getAttribute("user");
 
-        // Get information about downloaded chunks
-        FileChunks chunks = (FileChunks) session.getAttribute("chunks");
-        if (chunks == null){
-            chunks = new FileChunks();
-            session.setAttribute("chunks", chunks);
-        }
+        synchronized (user) {
+            // Get information about downloaded chunks
+            FileChunks chunks = (FileChunks) session.getAttribute("chunks");
+            if (chunks == null) {
+                chunks = new FileChunks();
+                session.setAttribute("chunks", chunks);
+            }
 
-        // Get info about chunk from request
-        FileChunkInfo chunkInfo = new FileChunkInfo(request);
+            // Get info about chunk from request
+            FileChunkInfo chunkInfo = new FileChunkInfo(request);
 
-        Path tempPath = FileUtils.createSubfolder(STORAGE + File.separator + user.getId() + File.separator + TEMP_FOLDER).orElseThrow(() -> {
-            return new HTTPException(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        });
+            // Save fileinfo in database
+            FileItem fileItem = filesService.processChunkInDb(user, chunkInfo);
 
-        String temp_file = tempPath.toAbsolutePath().toString() + File.separator + UUID.nameUUIDFromBytes(chunkInfo.getIdentifier().getBytes());
-        try (RandomAccessFile raf = new RandomAccessFile(temp_file, "rw")){
-            raf.seek(chunkInfo.getOffset());
-            raf.write(file.getBytes());
+            filesService.processChunk(user, chunkInfo, file);
             chunks.addChunk(chunkInfo);
+
+            // If file is downloaded set complited in FileItem
+            if (chunks.isDone(chunkInfo)) {
+                filesService.setFileComplited(fileItem);
+            }
         }
-
-
-
-        if (chunks.isDone(chunkInfo)){
-            //TODO: move to normal filename & add to db
-            Files.move(Paths.get(temp_file), Paths.get(STORAGE + File.separator + user.getId() + File.separator + "111111"));
-        }
-
-        System.out.println("===============");
-        System.out.println(chunkInfo);
-        System.out.println("===============");
         return new ResponseEntity(HttpStatus.OK);
     }
 
