@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
-public class FileItemTDO {
+public class FileItemDto {
     private final Long id;
     private final String filename;
     private final Long size;
@@ -14,7 +14,7 @@ public class FileItemTDO {
     private final LocalDateTime dateModified;
     private final boolean isDirectory;
 
-    public FileItemTDO(Long id, String filename, long size, String type, LocalDateTime dateModified, boolean isDirectory) {
+    public FileItemDto(Long id, String filename, long size, String type, LocalDateTime dateModified, boolean isDirectory) {
         this.id = id;
         this.filename = filename;
         this.size = size;

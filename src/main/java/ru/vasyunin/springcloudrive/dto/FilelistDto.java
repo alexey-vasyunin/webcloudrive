@@ -5,11 +5,11 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class FilelistDTO {
-    private List<FileItemTDO> content;
+public class FilelistDto {
+    private List<FileItemDto> content;
     private Long currentDirectory;
 
-    public FilelistDTO(List<FileItemTDO> content, Long currentDirectory) {
+    public FilelistDto(List<FileItemDto> content, Long currentDirectory) {
         this.content = content;
         this.currentDirectory = currentDirectory;
     }

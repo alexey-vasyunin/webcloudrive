@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
-import ru.vasyunin.springcloudrive.dto.FileItemTDO;
+import ru.vasyunin.springcloudrive.dto.FileItemDto;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
 import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
@@ -16,19 +16,12 @@ import ru.vasyunin.springcloudrive.repository.DirectoryRepository;
 import ru.vasyunin.springcloudrive.repository.FilesRepository;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
 import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
-import ru.vasyunin.springcloudrive.utils.FileChunks;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,9 +40,9 @@ public class FilesService {
         this.userRepository = userRepository;
     }
 
-    public List<FileItemTDO> getFilesInDirectory(User user, Long id) {
+    public List<FileItemDto> getFilesInDirectory(User user, Long id) {
         return filesRepository.findAllByUser(user).stream().map(file -> {
-            return new FileItemTDO(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
+            return new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
         }).collect(Collectors.toList());
     }
 
@@ -71,25 +64,25 @@ public class FilesService {
      * @param currentDirectory
      * @return
      */
-    public List<FileItemTDO> getFilelistByDirectory(DirectoryItem currentDirectory){
-        List<FileItemTDO> result = new ArrayList<>();
+    public List<FileItemDto> getFilelistByDirectory(DirectoryItem currentDirectory){
+        List<FileItemDto> result = new ArrayList<>();
 
         // If parent directory exists show it as ".."
         if (currentDirectory.getParent() != null){
-            result.add(new FileItemTDO(currentDirectory.getParentId(), "..", 0, "", null, true));
+            result.add(new FileItemDto(currentDirectory.getParentId(), "..", 0, "", null, true));
         }
 
         // Add subdirectories to response
         result.addAll(currentDirectory.getSubdirs().stream()
                 .map(dir -> {
-                    return new FileItemTDO(dir.getId(), dir.getName(), 0L, null, null, true);
+                    return new FileItemDto(dir.getId(), dir.getName(), 0L, null, null, true);
                 }).collect(Collectors.toList()));
 
         // Add filelist to response
         result.addAll(currentDirectory.getFiles().stream()
                 .filter(FileItem::isCompleted)
                 .map(file -> {
-                    return new FileItemTDO(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
+                    return new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
                 }).collect(Collectors.toList()));
 
         return result;
@@ -101,45 +94,41 @@ public class FilesService {
      * @param chunkInfo
      * @return FileItem object of file
      */
-    public FileItem processChunkInDb(User user, FileChunkInfo chunkInfo){
+    public FileItem processChunk(User user, FileChunkInfo chunkInfo, MultipartFile file){
         DirectoryItem dir = directoryRepository.findDirectoryItemByUserAndId(user, chunkInfo.relativePath);
         if (dir == null)
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
 
         FileItem item = filesRepository.findFileItemByUserAndAndDirectoryAndFilename(user, dir, chunkInfo.localFilename);
-        if (item != null) {
-            if (!item.isCompleted()) return item;
-            throw new HttpClientErrorException(HttpStatus.NOT_ACCEPTABLE);
+        if (item == null) {
+            item = new FileItem();
+            item.setCompleted(false);
+            item.setOriginFilename(chunkInfo.filename);
+            item.setFilename(chunkInfo.localFilename);
+            item.setSize(chunkInfo.totalSize);
+            item.setUser(user);
+            item.setLast_modified(LocalDateTime.now());
+            item.setDirectory(dir);
+            item.setType(FileUtils.getFileExtension(chunkInfo.filename));
+            item = filesRepository.save(item);
+        } else {
+            if (item.isCompleted()) {
+                throw new HttpClientErrorException(HttpStatus.NOT_ACCEPTABLE);
+            }
         }
 
-        item = new FileItem();
-        item.setCompleted(false);
-        item.setOriginFilename(chunkInfo.filename);
-        item.setFilename(chunkInfo.localFilename);
-        item.setSize(chunkInfo.totalSize);
-        item.setUser(user);
-        item.setLast_modified(LocalDateTime.now());
-        item.setDirectory(dir);
-        item.setType(FileUtils.getFileExtension(chunkInfo.filename));
-        return filesRepository.save(item);
-    }
-
-    /**
-     * Function adds chunk to target file
-     * @param user
-     * @param chunkInfo
-     * @param file
-     */
-    public void processChunk(User user, FileChunkInfo chunkInfo, MultipartFile file){
         String filename = STORAGE + File.separator + user.getId() + File.separator + chunkInfo.localFilename;
-        try (RandomAccessFile raf = new RandomAccessFile(filename, "rw")){
+        try (RandomAccessFile raf = new RandomAccessFile(filename, "rw")) {
             raf.seek(chunkInfo.offset);
             raf.write(file.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        return item;
     }
+
 
     public void setFileComplited(FileItem fileItem){
         fileItem.setCompleted(true);

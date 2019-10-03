@@ -6,25 +6,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.vasyunin.springcloudrive.entity.FileItem;
-import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
-import ru.vasyunin.springcloudrive.utils.FileChunks;
-import ru.vasyunin.springcloudrive.dto.FileItemTDO;
-import ru.vasyunin.springcloudrive.dto.FilelistDTO;
+import ru.vasyunin.springcloudrive.dto.FileItemDto;
+import ru.vasyunin.springcloudrive.dto.FilelistDto;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
+import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.service.DirectoryService;
 import ru.vasyunin.springcloudrive.service.FilesService;
 import ru.vasyunin.springcloudrive.service.RoleService;
 import ru.vasyunin.springcloudrive.service.UserService;
-import ru.vasyunin.springcloudrive.utils.FileUtils;
+import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
+import ru.vasyunin.springcloudrive.utils.FileChunks;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.xml.ws.http.HTTPException;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +50,7 @@ public class ApiController {
      * @return
      */
     @PostMapping("/filelist/directory/{id}")
-    public FilelistDTO getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId, HttpSession session){
+    public FilelistDto getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId, HttpSession session){
         // Get User from session
         User user = (User)session.getAttribute("user");
 
@@ -69,11 +64,11 @@ public class ApiController {
         }
 
         if (currentDirectory == null)
-            return new FilelistDTO(Collections.emptyList(), dirId);
+            return new FilelistDto(Collections.emptyList(), dirId);
 
-        List<FileItemTDO> result = filesService.getFilelistByDirectory(currentDirectory);
+        List<FileItemDto> result = filesService.getFilelistByDirectory(currentDirectory);
 
-        return new FilelistDTO(result, dirId);
+        return new FilelistDto(result, dirId);
     }
 
     @PostMapping("/upload/chunk")
@@ -97,9 +92,8 @@ public class ApiController {
             FileChunkInfo chunkInfo = new FileChunkInfo(request);
 
             // Save fileinfo in database
-            FileItem fileItem = filesService.processChunkInDb(user, chunkInfo);
+            FileItem fileItem = filesService.processChunk(user, chunkInfo, file);
 
-            filesService.processChunk(user, chunkInfo, file);
             chunks.addChunk(chunkInfo);
 
             // If file is downloaded set complited in FileItem

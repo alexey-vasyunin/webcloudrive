@@ -31,6 +31,7 @@ public class CustomAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHand
         DefaultSavedRequest defaultSavedRequest = (DefaultSavedRequest)request.getSession().getAttribute("SPRING_SECURITY_SAVED_REQUEST");
         // and redirect if not null
         if (defaultSavedRequest != null) {
+            System.out.println(defaultSavedRequest.getRedirectUrl());
             getRedirectStrategy().sendRedirect(request, response, defaultSavedRequest.getRedirectUrl());
         } else {
             super.onAuthenticationSuccess(request, response, authentication);
