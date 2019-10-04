@@ -82,6 +82,10 @@
 			<artifactId>hibernate-validator</artifactId>
 			<version>5.4.3.Final</version>
 		</dependency>
+		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+		</dependency>
     </dependencies>
 
 	<build>

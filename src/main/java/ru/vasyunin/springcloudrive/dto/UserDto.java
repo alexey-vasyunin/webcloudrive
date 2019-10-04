@@ -2,6 +2,7 @@ package ru.vasyunin.springcloudrive.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.vasyunin.springcloudrive.validator.FieldMatch;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
@@ -9,6 +10,9 @@ import javax.validation.constraints.Size;
 
 @Data
 @NoArgsConstructor
+@FieldMatch.List(
+        @FieldMatch(first = "password", second = "matchPassword", message = "The password fields must match")
+)
 public class UserDto {
 
     private String fistName;
