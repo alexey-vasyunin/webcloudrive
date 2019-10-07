@@ -8,21 +8,23 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import ru.vasyunin.springcloudrive.dto.UserDto;
+import ru.vasyunin.springcloudrive.entity.User;
+import ru.vasyunin.springcloudrive.service.MailService;
 import ru.vasyunin.springcloudrive.service.UserService;
 
 import javax.validation.Valid;
-import java.util.stream.Collectors;
 
 @Controller
 public class AuthController {
 
     private final UserService userService;
+    private final MailService mailService;
 
     @Autowired
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, MailService mailService) {
         this.userService = userService;
+        this.mailService = mailService;
     }
 
     @GetMapping("/register")
@@ -33,21 +35,23 @@ public class AuthController {
     }
 
     @PostMapping("/register/form")
-    public String registerUser(@Valid @ModelAttribute("UserDto") UserDto userDTO,
+    public String registerUser(@Valid @ModelAttribute("userDto") UserDto userDto,
                                BindingResult bindingResult,
                                Model model){
-        model.addAttribute("userDto", userDTO);
 
+        if (userService.getUserByUsername(userDto.getUsername()) != null){
+            bindingResult.addError(new FieldError("userDto", "username", userDto.getUsername(), false, null, null, "Username has already registered"));
+        };
+
+        // If dto has some errors show register form
         if (bindingResult.hasErrors()) {
             return "register";
         }
 
-//        if (userService.getUserByUsername(userDTO.getUsername()) != null){
-//            bindingResult.rejectValue("username", "isexists", "Username has already registered");
-//            return "register";
-//        };
+        User user = userService.createUser(userDto);
 
-        System.out.println(userDTO);
-        return "register";
+        mailService.sendRegistrationMessage(user);
+
+        return "redirect:/";
     }
 }

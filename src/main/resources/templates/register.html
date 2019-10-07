@@ -47,22 +47,25 @@
           </div>
           <div class="form-group">
             <div class="form-label-group">
-              <input type="email" id="inputEmail" th:field="*{username}" class="form-control" placeholder="Email address" required="required">
-              <label for="inputEmail">Email address</label>
+              <input type="email" id="username" th:field="*{username}" class="form-control" th:errorclass="is-invalid" placeholder="Email address" required="required">
+              <label for="username">Email address</label>
+              <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
             </div>
           </div>
           <div class="form-group">
             <div class="form-row">
               <div class="col-md-6">
                 <div class="form-label-group">
-                  <input type="password" id="inputPassword" th:field="*{password}" class="form-control" placeholder="Password" required="required">
+                  <input type="password" id="inputPassword" th:field="*{password}" class="form-control" th:errorclass="is-invalid" placeholder="Password" required="required">
                   <label for="inputPassword">Password</label>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-label-group">
-                  <input type="password" id="confirmPassword" th:field="*{matchPassword}" class="form-control" placeholder="Confirm password" required="required">
+                  <input type="password" id="confirmPassword" th:field="*{matchPassword}" class="form-control" th:errorclass="is-invalid" placeholder="Confirm password" required="required">
                   <label for="confirmPassword">Confirm password</label>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('matchPassword')}" th:errors="*{matchPassword}"></div>
                 </div>
               </div>
             </div>

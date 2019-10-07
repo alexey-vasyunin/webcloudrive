@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 create table users
 (
@@ -71,4 +71,21 @@ create table files
 alter table files owner to cloudrive;
 
 create unique index files_file_id_uindex on files (file_id);
+
+create table registration_token
+(
+    user_id integer not null,
+    token varchar(56) default uuid_generate_v4() not null
+        constraint registration_token_pk
+            primary key,
+    created timestamp default CURRENT_TIMESTAMP
+);
+
+alter table registration_token owner to cloudrive;
+
+create unique index registration_token_user_id_uindex
+    on registration_token (user_id);
+
+create unique index registration_token_token_uindex
+    on registration_token (token);
 

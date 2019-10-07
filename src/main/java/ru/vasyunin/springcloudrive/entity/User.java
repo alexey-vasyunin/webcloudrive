@@ -62,7 +62,7 @@ public class User {
     public boolean hasRoles(String role){
         if (roles == null || role.equals("")) return false;
         for (Role value : roles) {
-            if (value.getRole_name().equals(role)) return true;
+            if (value.getRoleName().equals(role)) return true;
         }
         return false;
     }

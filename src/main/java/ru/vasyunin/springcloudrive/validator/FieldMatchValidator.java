@@ -28,7 +28,7 @@ public class FieldMatchValidator implements ConstraintValidator<FieldMatch, Obje
         } catch (final Exception ignore){ }
         if (!valid){
             context.buildConstraintViolationWithTemplate(message)
-                    .addPropertyNode(firstFieldName)
+                    .addPropertyNode(secondFieldName)
                     .addConstraintViolation()
                     .disableDefaultConstraintViolation();
         }

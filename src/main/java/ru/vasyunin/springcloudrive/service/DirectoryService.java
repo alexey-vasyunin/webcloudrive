@@ -36,4 +36,11 @@ public class DirectoryService {
         return directoryRepository.findDirectoryItemByUserAndParentIsNull(user);
     }
 
+    public DirectoryItem createRootDirectory(User user){
+        DirectoryItem item = new DirectoryItem();
+        item.setUser(user);
+        item.setName("root");
+        return directoryRepository.save(item);
+    }
+
 }
