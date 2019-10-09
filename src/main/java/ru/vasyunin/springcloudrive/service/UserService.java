@@ -1,32 +1,41 @@
 package ru.vasyunin.springcloudrive.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.vasyunin.springcloudrive.dto.UserDto;
-import ru.vasyunin.springcloudrive.entity.DirectoryItem;
 import ru.vasyunin.springcloudrive.entity.User;
+import ru.vasyunin.springcloudrive.repository.RegistrationTokenRepository;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collections;
 
 @Service
+@Transactional
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final RoleService roleService;
     private final DirectoryService directoryService;
+    private final RegistrationTokenRepository tokenRepository;
+    private final EntityManager entityManager;
 
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RoleService roleService, DirectoryService directoryService) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RoleService roleService, DirectoryService directoryService, RegistrationTokenRepository tokenRepository, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
         this.directoryService = directoryService;
+        this.tokenRepository = tokenRepository;
+        this.entityManager = entityManager;
     }
 
     public User getUserById(long id){
@@ -56,6 +65,22 @@ public class UserService implements UserDetailsService {
         user = userRepository.save(user);
         directoryService.createRootDirectory(user);
         return user;
+    }
+
+    /**
+     * Confirm email
+     * @param email
+     * @param token
+     * @return
+     */
+    public boolean confirmUser(String email, String token){
+        User user = userRepository.findByUsername(email);
+        if (user == null || user.isActive() || user.getToken() == null || !user.getToken().getToken().equals(token))
+            return false;
+
+        user.setActive(true);
+        tokenRepository.delete(user.getToken());
+        return true;
     }
 
 }

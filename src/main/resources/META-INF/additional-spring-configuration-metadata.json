@@ -14,5 +14,10 @@
       "name": "cloudrive.storage.tempfilder",
       "type": "java.lang.String",
       "description": "Name of subfolder in user's directory for saveing chunks of files"
+    },
+    {
+      "name": "cloudrive.web.server-url",
+      "type": "java.lang.String",
+      "description": "External server url for cloudrive webserver"
     }
   ] }

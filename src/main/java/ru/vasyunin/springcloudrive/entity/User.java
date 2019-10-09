@@ -12,6 +12,7 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "username")
@@ -53,6 +54,9 @@ public class User {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<FileItem> files;
+
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "user")
+    private RegistrationToken token;
 
     /**
      * Check if user has the role

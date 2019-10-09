@@ -74,18 +74,24 @@ create unique index files_file_id_uindex on files (file_id);
 
 create table registration_token
 (
-    user_id integer not null,
-    token varchar(56) default uuid_generate_v4() not null
+    user_id bigint not null
+        constraint registration_token_users_id_fk
+            references users,
+    token varchar(56) default uuid_generate_v4(),
+    created timestamp default CURRENT_TIMESTAMP,
+    id bigserial not null
         constraint registration_token_pk
-            primary key,
-    created timestamp default CURRENT_TIMESTAMP
+            primary key
 );
 
 alter table registration_token owner to cloudrive;
 
+create unique index registration_token_token_uindex
+    on registration_token (token);
+
 create unique index registration_token_user_id_uindex
     on registration_token (user_id);
 
-create unique index registration_token_token_uindex
-    on registration_token (token);
+
+
 
