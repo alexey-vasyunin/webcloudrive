@@ -2,6 +2,7 @@ package ru.vasyunin.springcloudrive.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,6 +18,7 @@ import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -51,7 +53,14 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByUsername(username);
         System.out.println(user);
         if (user == null) throw new UsernameNotFoundException("User not found in database");
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), Collections.emptyList());
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                user.getRoles()
+                        .stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
+                        .collect(Collectors.toList())
+        );
     }
 
     public User createUser(UserDto userDto){

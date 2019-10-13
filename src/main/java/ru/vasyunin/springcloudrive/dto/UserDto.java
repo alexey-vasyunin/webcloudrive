@@ -1,5 +1,6 @@
 package ru.vasyunin.springcloudrive.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.vasyunin.springcloudrive.validator.FieldMatch;
@@ -24,10 +25,12 @@ public class UserDto {
 
     @NotNull(message = "is required")
     @Size(min = 6, message = "is too short")
+    @JsonIgnore
     private String password;
 
     @NotNull(message = "is required")
     @Size(min = 6, message = "is too short")
+    @JsonIgnore
     private String matchPassword;
 
 }
