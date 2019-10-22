@@ -10,6 +10,7 @@ create table users
     photourl   varchar,
     isactive   boolean   default false,
     isexpiried boolean   default false,
+    isblocked  boolean   default false,
     created    timestamp default CURRENT_TIMESTAMP,
     lastseen   timestamp
 );

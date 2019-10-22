@@ -1,5 +1,5 @@
-INSERT INTO users (id, username, password, firstname, lastname, photourl, isactive, isexpiried, created, lastseen) VALUES (1, 'user', '$2a$10$ZeChEN0IJW602heKK/T50OVYyhYGsWtgJ6tcvgSf39V6D7sVqaacC', 'Alexey', 'Vasyunin', null, true, false, '2019-09-11 10:04:38.674912', null);
-INSERT INTO users (id, username, password, firstname, lastname, photourl, isactive, isexpiried, created, lastseen) VALUES (2, 'user2', '$2a$10$ZeChEN0IJW602heKK/T50OVYyhYGsWtgJ6tcvgSf39V6D7sVqaacC', 'User2', 'SecondNameU2', null, true, false, '2019-09-11 10:04:38.674912', null);
+INSERT INTO users (id, username, password, firstname, lastname, photourl, isactive, isexpiried, isblocked, created, lastseen) VALUES (1, 'user', '$2a$10$ZeChEN0IJW602heKK/T50OVYyhYGsWtgJ6tcvgSf39V6D7sVqaacC', 'Alexey', 'Vasyunin', null, true, false, false, '2019-09-11 10:04:38.674912', null);
+INSERT INTO users (id, username, password, firstname, lastname, photourl, isactive, isexpiried, isblocked, created, lastseen) VALUES (2, 'user2', '$2a$10$ZeChEN0IJW602heKK/T50OVYyhYGsWtgJ6tcvgSf39V6D7sVqaacC', 'User2', 'SecondNameU2', null, true, false, false, '2019-09-11 10:04:38.674912', null);
 select setval('users_id_seq', 2);
 
 INSERT INTO roles (role_id, role_name) VALUES (0, 'NO_ROLE');

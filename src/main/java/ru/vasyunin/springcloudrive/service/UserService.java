@@ -1,12 +1,10 @@
 package ru.vasyunin.springcloudrive.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.vasyunin.springcloudrive.dto.UserDto;
@@ -17,7 +15,6 @@ import ru.vasyunin.springcloudrive.repository.UserRepository;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,11 +53,14 @@ public class UserService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
+                user.isActive(),
+                !user.isExpiried(),
+                true,
+                !user.isBlocked(),
                 user.getRoles()
                         .stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
-                        .collect(Collectors.toList())
-        );
+                        .collect(Collectors.toList()));
     }
 
     public User createUser(UserDto userDto){

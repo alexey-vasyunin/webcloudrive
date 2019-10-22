@@ -36,6 +36,9 @@ public class User {
     @Column(name = "isexpiried")
     private boolean isExpiried;
 
+    @Column(name = "isblocked")
+    private boolean isBlocked;
+
     @Column(name = "created")
     private LocalDateTime created;
 
