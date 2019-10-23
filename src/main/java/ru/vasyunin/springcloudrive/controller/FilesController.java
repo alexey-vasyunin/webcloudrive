@@ -4,12 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.service.FilesService;
@@ -18,6 +16,8 @@ import ru.vasyunin.springcloudrive.service.UserService;
 import javax.servlet.http.HttpServletRequest;
 import java.io.FileNotFoundException;
 import java.security.Principal;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/file")
@@ -31,6 +31,12 @@ public class FilesController {
     @Value("${cloudrive.storage.create_if_not_exists}")
     private boolean checkDir;
 
+
+    @Autowired
+    public FilesController(UserService userService, FilesService filesService) {
+        this.userService = userService;
+        this.filesService = filesService;
+    }
 
 
 //    @Secured({"ADMIN"})
@@ -46,6 +52,10 @@ public class FilesController {
     @GetMapping(value = "/download/{id}", produces = "application/octet-stream")
     public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request) {
         User user = (User)request.getSession().getAttribute("user");
+        System.out.println(Collections.list(request.getHeaderNames()) // log headers
+                .stream()
+                .map(request::getHeader)
+                .collect(Collectors.joining()));
         FileItem fileItem = filesService.getFileById(user, id);
         if (fileItem == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -57,11 +67,21 @@ public class FilesController {
         }
     }
 
+    /**
+     * Delete file
+     * @param id
+     * @param request
+     * @return
+     */
+    @DeleteMapping(value = "/delete/{id}")
+    public ResponseEntity deleteFile(@PathVariable("id") Long id, HttpServletRequest request){
+        if (id == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 
-    @Autowired
-    public FilesController(UserService userService, FilesService filesService) {
-        this.userService = userService;
-        this.filesService = filesService;
+        User user = (User)request.getSession().getAttribute("user");
+        if (filesService.deleteFile(user, id))
+            return ResponseEntity.ok().build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
 }
