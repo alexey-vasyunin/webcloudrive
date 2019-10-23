@@ -13,5 +13,6 @@ import java.util.List;
 public interface FilesRepository extends JpaRepository<FileItem, Long> {
     List<FileItem> findAllByUser(User user);
     FileItem findFileItemByUserAndId(User user, long id);
-    FileItem findFileItemByUserAndAndDirectoryAndFilename(User user, DirectoryItem directory, String filename);
+    FileItem findFileItemByUserAndDirectoryAndFilename(User user, DirectoryItem directory, String filename);
+    boolean deleteFileItemByUserAndId(User user, long id);
 }

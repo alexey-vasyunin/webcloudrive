@@ -98,7 +98,7 @@ public class ApiController {
 
             // If file is downloaded set complited in FileItem
             if (chunks.isDone(chunkInfo)) {
-                filesService.setFileComplited(fileItem);
+                fileItem.setCompleted(true);
             }
         }
         return new ResponseEntity(HttpStatus.OK);

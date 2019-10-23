@@ -99,7 +99,7 @@ public class FilesService {
         if (dir == null)
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
 
-        FileItem item = filesRepository.findFileItemByUserAndAndDirectoryAndFilename(user, dir, chunkInfo.localFilename);
+        FileItem item = filesRepository.findFileItemByUserAndDirectoryAndFilename(user, dir, chunkInfo.localFilename);
         if (item == null) {
             item = new FileItem();
             item.setCompleted(false);
@@ -129,10 +129,7 @@ public class FilesService {
         return item;
     }
 
-
-    public void setFileComplited(FileItem fileItem){
-        fileItem.setCompleted(true);
-        filesRepository.saveAndFlush(fileItem);
+    public boolean deleteFile(User user, long fileId){
+        return filesRepository.deleteFileItemByUserAndId(user, fileId);
     }
-
 }
