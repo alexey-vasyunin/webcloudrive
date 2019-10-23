@@ -2,9 +2,8 @@ package ru.vasyunin.springcloudrive.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,8 @@ import ru.vasyunin.springcloudrive.service.FilesService;
 import ru.vasyunin.springcloudrive.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
-import java.security.Principal;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -50,17 +49,19 @@ public class FilesController {
      * reads file returns 500 (HttpStatus.INTERNAL_SERVER_ERROR)
      */
     @GetMapping(value = "/download/{id}", produces = "application/octet-stream")
-    public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request) {
+    public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
         User user = (User)request.getSession().getAttribute("user");
         System.out.println(Collections.list(request.getHeaderNames()) // log headers
                 .stream()
-                .map(request::getHeader)
-                .collect(Collectors.joining()));
+                .map(s -> s + ": " + request.getHeader(s))
+                .collect(Collectors.joining(System.lineSeparator())));
         FileItem fileItem = filesService.getFileById(user, id);
+
         if (fileItem == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
         try {
-            return filesService.getFile(fileItem, user);
+            return filesService.getFileResponse(fileItem, user);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
