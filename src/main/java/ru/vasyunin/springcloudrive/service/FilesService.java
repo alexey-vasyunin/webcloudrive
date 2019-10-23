@@ -19,6 +19,9 @@ import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +57,7 @@ public class FilesService {
         File file = new File(STORAGE + File.separator + user.getId() + File.separator  + fileItem.getFilename());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileItem.getOriginFilename())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"" + fileItem.getOriginFilename() + "\"")
                 .contentLength(file.length())
                 .body(resource);
     }
@@ -136,6 +139,18 @@ public class FilesService {
     }
 
     public boolean deleteFile(User user, long fileId){
-        return filesRepository.deleteFileItemByUserAndId(user, fileId);
+        FileItem fileItem = filesRepository.findFileItemByUserAndId(user, fileId);
+        if (fileItem == null) return false;
+
+        try {
+            Files.delete(Paths.get(STORAGE + File.separator + user.getId() + File.separator  + fileItem.getFilename()));
+            filesRepository.delete(fileItem);
+            return true;
+        } catch (NoSuchFileException e) {
+            filesRepository.delete(fileItem);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

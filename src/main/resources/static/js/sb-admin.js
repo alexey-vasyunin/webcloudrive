@@ -94,10 +94,18 @@
                                 .append('<td>&nbsp;</td>')
                                 .append('<td>&nbsp;</td>')
                                 .append('<td>&nbsp;</td>')
+                                .append('<td>&nbsp;</td>')
                                 .append('</tr>');
                         } else {
-                            row = $("<tr itemid='" + file.id + "' class=\"fileitem\">>")
-                                .append('<td>' + file.filename + '</td>')
+                            row = $("<tr itemid='" + file.id + "' class=\"fileitem\">")
+                                .append('<td><a href="/file/download/' + file.id + '" class="text-muted">' + file.filename + '</a></td>')
+                                .append('<td><div class="dropdown">\n' +
+                                    '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
+                                    '  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton' + file.id + ' ">\n' +
+                                    '    <a class="dropdown-item download-button" href="#" id="downloadButton' + file.id + '">Скачать</a>\n' +
+                                    '    <a class="dropdown-item delete-button" href="#" id="deleteButton' + file.id + '">Удалить</a>\n' +
+                                    '  </div>\n' +
+                                    '</div></td>')
                                 .append('<td>' + file.dateModified + '</td>')
                                 .append('<td>' + file.type + '</td>')
                                 .append('<td>' + file.size + '</td>')
@@ -110,8 +118,21 @@
                     $(document).on('click', 'tr.directoryitem', function (event) {
                         filelistLoad($(this).attr("itemid"));
                     });
-                    $(document).on('click', 'tr.fileitem', function (event) {
-                        window.location = '/file/download/' + $(this).attr("itemid");
+
+                    $(document).on('click', 'a.download-button', function (event) {
+                        let id = event.target.id.substring('downloadButton'.length);
+                        window.location = '/file/download/' + id;
+                    });
+                    $(document).on('click', 'a.delete-button', function (event) {
+                        let id = event.target.id.substring('deleteButton'.length);
+                        console.log(id);
+                        $.ajax({
+                            method: "DELETE",
+                            url: "/file/delete",
+                            data: { id: id }
+                        }).done(function( msg ) {
+                                filelistLoad($("#fileTable").attr("directory"));
+                        });
                     });
                 }
             }

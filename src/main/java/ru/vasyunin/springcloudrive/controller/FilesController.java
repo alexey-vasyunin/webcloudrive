@@ -74,8 +74,8 @@ public class FilesController {
      * @param request
      * @return
      */
-    @DeleteMapping(value = "/delete/{id}")
-    public ResponseEntity deleteFile(@PathVariable("id") Long id, HttpServletRequest request){
+    @DeleteMapping(value = "/delete")
+    public ResponseEntity deleteFile(@RequestParam Long id, HttpServletRequest request){
         if (id == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 
         User user = (User)request.getSession().getAttribute("user");
