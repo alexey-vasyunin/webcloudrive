@@ -217,13 +217,14 @@
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-bordered" id="fileTable" width="100%" cellspacing="0" th:attr="directory=${root.getId()}">
+              <table class="table table-sm table-hover" id="fileTable" th:attr="directory=${root.getId()}">
                 <thead>
                 <tr>
-                  <th>Имя файла</th>
-                  <th>Дата изменения</th>
-                  <th>Тип</th>
-                  <th>Размер</th>
+                  <th class="w-auto" scope="col">Имя файла</th>
+                  <th style="width: 50px;">&nbsp;</th>
+                  <th style="width: 200px;" scope="col">Дата изменения</th>
+                  <th style="width: 10%;" scope="col">Тип</th>
+                  <th style="width: 10%;" scope="col">Размер</th>
                 </tr>
                 </thead>
                 <tbody>
