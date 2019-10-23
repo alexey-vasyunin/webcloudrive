@@ -76,7 +76,6 @@ public class FileChunks {
      */
     public boolean addChunk(String filename, Long chunkNumber){
         Chunk chunk = new Chunk(filename, chunkNumber);
-        System.out.println(chunk.hashCode());
         return chunks.add(chunk);
     }
 

@@ -50,7 +50,7 @@ public class FilesService {
         return filesRepository.findFileItemByUserAndId(user, id);
     }
 
-    public ResponseEntity<InputStreamResource> getFile(FileItem fileItem, User user) throws FileNotFoundException {
+    public ResponseEntity<InputStreamResource> getFileResponse(FileItem fileItem, User user) throws FileNotFoundException {
         File file = new File(STORAGE + File.separator + user.getId() + File.separator  + fileItem.getFilename());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
         return ResponseEntity.ok()
@@ -59,11 +59,12 @@ public class FilesService {
                 .body(resource);
     }
 
-    /**
-     * Function return list of directories and files in directory
-     * @param currentDirectory
-     * @return
-     */
+
+        /**
+         * Function return list of directories and files in directory
+         * @param currentDirectory
+         * @return
+         */
     public List<FileItemDto> getFilelistByDirectory(DirectoryItem currentDirectory){
         List<FileItemDto> result = new ArrayList<>();
 
@@ -127,6 +128,11 @@ public class FilesService {
         }
 
         return item;
+    }
+
+    public void setFileComplited(FileItem fileItem){
+        fileItem.setCompleted(true);
+        filesRepository.saveAndFlush(fileItem);
     }
 
     public boolean deleteFile(User user, long fileId){

@@ -26,7 +26,7 @@ public class FileChunkInfo {
         identifier = request.getParameter("resumableIdentifier");
         filename = request.getParameter("resumableFilename");
         localFilename = UUID.nameUUIDFromBytes((identifier + relativePath).getBytes()).toString();
-        totalChunks = (int) Math.ceil(((double)(totalSize/ chunkSize)));
+        totalChunks = (int) Math.ceil(((double)totalSize/ (double)chunkSize));
         offset = (chunkNumber - 1) * chunkSize;
     }
 }
