@@ -1,6 +1,7 @@
 package ru.vasyunin.springcloudrive.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -14,6 +15,7 @@ import ru.vasyunin.springcloudrive.service.UserService;
 
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private CustomAuthSuccessHandler customAuthSucceessHandler;
     private UserService userService;

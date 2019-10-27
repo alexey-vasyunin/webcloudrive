@@ -1,0 +1,60 @@
+cloudrive:
+  storage:
+    directory: c:\\temp\\storage
+    create_if_not_exists: true
+    tempfilder: 8da8d664-4882-4391-98bb-70aa921cdc30
+  web.server-url: http://localhost:8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/webcloudrive
+    username: cloudrive
+    password: cloudrive
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+
+  # Mailer
+  mail:
+    host: smtp.yandex.ru
+    port: 587
+  # username: username # << edit here
+  # password: password # << and here
+
+  # Other properties
+    properties:
+      mail:
+        smtp:
+          auth: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+          starttls:
+            enable: true
+
+logging:
+  level:
+    org:
+      springframework:
+        web:
+          filter:
+            CommonsRequestLoggingFilter: DEBUG
+
+
+security:
+  oauth2:
+    client:
+#      clientId: 233668646673605
+#      clientSecret: 33b17e044ee6a4fa383f46ec6e28ea1d
+      accessTokenUri: https://graph.facebook.com/oauth/access_token
+      userAuthorizationUri: https://www.facebook.com/dialog/oauth
+      tokenName: oauth_token
+      authenticationScheme: query
+      clientAuthenticationScheme: form
+    resource:
+      userInfoUri: https://graph.facebook.com/me
