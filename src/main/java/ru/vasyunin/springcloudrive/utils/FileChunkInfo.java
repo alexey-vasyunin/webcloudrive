@@ -26,7 +26,17 @@ public class FileChunkInfo {
         identifier = request.getParameter("resumableIdentifier");
         filename = request.getParameter("resumableFilename");
         localFilename = UUID.nameUUIDFromBytes((identifier + relativePath).getBytes()).toString();
-        totalChunks = (int) Math.ceil(((double)totalSize/ (double)chunkSize));
+        totalChunks = Integer.parseInt(request.getParameter("resumableTotalChunks"));
         offset = (chunkNumber - 1) * chunkSize;
+    }
+
+    @Override
+    public String toString() {
+        return "FileChunkInfo{" +
+                "chunkSize=" + chunkSize +
+                ", totalSize=" + totalSize +
+                ", chunkNumber=" + chunkNumber +
+                ", totalChunks=" + totalChunks +
+                '}';
     }
 }

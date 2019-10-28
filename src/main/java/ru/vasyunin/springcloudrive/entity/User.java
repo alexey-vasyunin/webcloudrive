@@ -1,6 +1,9 @@
 package ru.vasyunin.springcloudrive.entity;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -9,6 +12,7 @@ import java.util.List;
 @Entity
 @Data
 @Table(name = "users")
+@NoArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,9 +44,10 @@ public class User {
     private boolean isBlocked;
 
     @Column(name = "created")
+    @CreationTimestamp
     private LocalDateTime created;
 
-    @Column(name = "lastseen")
+    @Column(name = "lastseen", columnDefinition = "TIMESTAMP")
     private LocalDateTime lastseen;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -60,6 +65,20 @@ public class User {
 
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "user")
     private RegistrationToken token;
+
+
+    public void setLastseenNow(){
+        lastseen = LocalDateTime.now();
+    }
+
+    public User(String username, String password, String firstName, String lastName, boolean isActive, List<Role> roles) {
+        this.username = username;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.isActive = isActive;
+        this.roles = roles;
+    }
 
     /**
      * Check if user has the role

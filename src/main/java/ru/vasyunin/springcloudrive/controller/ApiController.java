@@ -90,7 +90,6 @@ public class ApiController {
 
             // Get info about chunk from request
             FileChunkInfo chunkInfo = new FileChunkInfo(request);
-
             // Save fileinfo in database
             FileItem fileItem = filesService.processChunk(user, chunkInfo, file);
 

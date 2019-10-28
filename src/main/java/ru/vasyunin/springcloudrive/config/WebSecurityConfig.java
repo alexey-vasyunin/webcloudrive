@@ -1,37 +1,82 @@
 package ru.vasyunin.springcloudrive.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.PrincipalExtractor;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.UserInfoTokenServices;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2ClientContext;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.filter.OAuth2ClientAuthenticationProcessingFilter;
+import org.springframework.security.oauth2.client.filter.OAuth2ClientContextFilter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.filter.CompositeFilter;
+import ru.vasyunin.springcloudrive.entity.User;
+import ru.vasyunin.springcloudrive.repository.UserRepository;
+import ru.vasyunin.springcloudrive.service.RoleService;
 import ru.vasyunin.springcloudrive.service.UserService;
+import ru.vasyunin.springcloudrive.utils.OAuthClientResource;
+
+import javax.servlet.Filter;
+import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Configuration
+@Transactional
 @EnableWebSecurity
+@EnableConfigurationProperties
+@EnableOAuth2Client
+@Order(1000)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    private CustomAuthSuccessHandler customAuthSucceessHandler;
-    private UserService userService;
+    private final CustomAuthSuccessHandler customAuthSuccessHandler;
+    private final UserService userService;
+    private final OAuth2ClientContext oAuth2ClientContext;
+    private final PrincipalExtractor principalExtractor;
+
+    @Lazy
+    @Autowired
+    public WebSecurityConfig(CustomAuthSuccessHandler customAuthSuccessHandler, UserService userService, OAuth2ClientContext oAuth2ClientContext, PrincipalExtractor principalExtractor) {
+        this.customAuthSuccessHandler = customAuthSuccessHandler;
+        this.userService = userService;
+        this.oAuth2ClientContext = oAuth2ClientContext;
+        this.principalExtractor = principalExtractor;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
-                    .antMatchers("/home", "/404", "/register", "/register/**", "/forgot").permitAll()
+                    .antMatchers("/home", "/404", "/login", "/login/**", "/register", "/register/**", "/forgot").permitAll()
                     .antMatchers("/css/**", "/js/**", "/vendor/**").permitAll()
                     .anyRequest().authenticated()
                 .and()
                     .formLogin()
                     .loginPage("/login")
                     .permitAll()
-                    .successHandler(customAuthSucceessHandler)
+                    .successHandler(customAuthSuccessHandler)
+//                .and()
+//                    .oauth2Login()
+//                    .successHandler(customAuthSuccessHandler)
                 .and()
-                    .logout().permitAll();
+                    .logout().permitAll()
+                .and()
+                    .addFilterBefore(ssoFilter(), BasicAuthenticationFilter.class);
     }
 
     @Override
@@ -53,17 +98,72 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
+    private Filter ssoFilter(){
+        CompositeFilter filter = new CompositeFilter();
+        List<Filter> filters = new ArrayList<>();
 
-    //<editor-fold desc="Autowires">
-    @Autowired
-    @Lazy
-    public void setUserService(UserService userService) {
-        this.userService = userService;
+        filters.add(ssoFilter(facebook(), "/login/facebook"));
+        filters.add(ssoFilter(google(), "/login/google"));
+
+        filter.setFilters(filters);
+        return filter;
     }
 
-    @Autowired
-    public void setCustomAuthSucceessHandler(CustomAuthSuccessHandler customAuthSucceessHandler) {
-        this.customAuthSucceessHandler = customAuthSucceessHandler;
+    private Filter ssoFilter(OAuthClientResource resource, String path){
+        OAuth2ClientAuthenticationProcessingFilter filter = new OAuth2ClientAuthenticationProcessingFilter(path);
+        OAuth2RestTemplate template = new OAuth2RestTemplate(resource.getClient(), oAuth2ClientContext);
+        filter.setRestTemplate(template);
+        UserInfoTokenServices tokenServices = new UserInfoTokenServices(resource.getResource().getUserInfoUri(), resource.getClient().getClientId());
+        tokenServices.setRestTemplate(template);
+        tokenServices.setPrincipalExtractor(principalExtractor);
+        filter.setTokenServices(tokenServices);
+        filter.setAuthenticationSuccessHandler(customAuthSuccessHandler);
+        return filter;
     }
-    //</editor-fold>
+
+    @Bean
+    @ConfigurationProperties("oauth2.facebook")
+    public OAuthClientResource facebook(){
+        return new OAuthClientResource();
+    }
+
+
+    @Bean
+    @ConfigurationProperties("oauth2.google")
+    public OAuthClientResource google(){
+        return new OAuthClientResource();
+    }
+
+
+    @Bean
+    public FilterRegistrationBean<OAuth2ClientContextFilter> oAuth2ClientFilterRegistration(OAuth2ClientContextFilter filter){
+        FilterRegistrationBean<OAuth2ClientContextFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(filter);
+        registration.setOrder(-100);
+        return registration;
+    }
+
+
+    @Bean
+    public PrincipalExtractor principalExtractor(UserRepository userRepository, RoleService roleService, HttpServletRequest request){
+        return map -> {
+            String username = (String)map.get("email");
+
+            User user = userRepository.findUserByUsernameAndIsActiveTrue(username)
+                    .orElseGet(() ->
+                            userService.createUser(
+                                    new User(
+                                            username,
+                                            passwordEncoder().encode(UUID.randomUUID().toString()),
+                                            (String) map.get("given_name"),
+                                            (String) map.get("family_name"),
+                                            (boolean) map.get("email_verified"),
+                                            roleService.getRolesByName("USER")
+                                    )
+                            ));
+
+            return (AuthenticatedPrincipal) user::getUsername;
+        };
+    }
+
 }
