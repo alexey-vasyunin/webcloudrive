@@ -16,7 +16,7 @@ public class RoleService {
         this.roleRepository = roleRepository;
     }
 
-    List<Role> getRolesByName(String rolename){
+    public List<Role> getRolesByName(String rolename){
         return roleRepository.findAllByRoleName(rolename);
     }
 }

@@ -49,8 +49,8 @@ logging:
 oauth2:
   facebook:
     client:
-      clientId: 233668646673605
-      clientSecret: 33b17e044ee6a4fa383f46ec6e28ea1d
+      clientId: # ***
+      clientSecret: # ***
       accessTokenUri: https://graph.facebook.com/oauth/access_token
       userAuthorizationUri: https://www.facebook.com/dialog/oauth
       tokenName: oauth_token
@@ -60,8 +60,8 @@ oauth2:
       userInfoUri: https://graph.facebook.com/me
   google:
     client:
-      clientId: #.apps.googleusercontent.com
-      clientSecret: #45
+      clientId: # ***
+      clientSecret: # ***
       clientAuthenticationScheme: form
       scope: openid,email,profile
       accessTokenUri: https://www.googleapis.com/oauth2/v4/token

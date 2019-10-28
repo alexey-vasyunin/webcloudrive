@@ -15,7 +15,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
@@ -25,37 +25,34 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.filter.CompositeFilter;
 import ru.vasyunin.springcloudrive.entity.User;
-import ru.vasyunin.springcloudrive.repository.UserDetailsRepo;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
+import ru.vasyunin.springcloudrive.service.RoleService;
 import ru.vasyunin.springcloudrive.service.UserService;
 import ru.vasyunin.springcloudrive.utils.OAuthClientResource;
 
 import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.time.LocalDateTime;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Configuration
+@Transactional
 @EnableWebSecurity
 @EnableConfigurationProperties
 @EnableOAuth2Client
 @Order(1000)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    private final CustomAuthSuccessHandler customAuthSucceessHandler;
+    private final CustomAuthSuccessHandler customAuthSuccessHandler;
     private final UserService userService;
     private final OAuth2ClientContext oAuth2ClientContext;
     private final PrincipalExtractor principalExtractor;
 
     @Lazy
     @Autowired
-    public WebSecurityConfig(CustomAuthSuccessHandler customAuthSucceessHandler, UserService userService, OAuth2ClientContext oAuth2ClientContext, PrincipalExtractor principalExtractor) {
-        this.customAuthSucceessHandler = customAuthSucceessHandler;
+    public WebSecurityConfig(CustomAuthSuccessHandler customAuthSuccessHandler, UserService userService, OAuth2ClientContext oAuth2ClientContext, PrincipalExtractor principalExtractor) {
+        this.customAuthSuccessHandler = customAuthSuccessHandler;
         this.userService = userService;
         this.oAuth2ClientContext = oAuth2ClientContext;
         this.principalExtractor = principalExtractor;
@@ -72,7 +69,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .formLogin()
                     .loginPage("/login")
                     .permitAll()
-                    .successHandler(customAuthSucceessHandler)
+                    .successHandler(customAuthSuccessHandler)
+//                .and()
+//                    .oauth2Login()
+//                    .successHandler(customAuthSuccessHandler)
                 .and()
                     .logout().permitAll()
                 .and()
@@ -117,6 +117,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         tokenServices.setRestTemplate(template);
         tokenServices.setPrincipalExtractor(principalExtractor);
         filter.setTokenServices(tokenServices);
+        filter.setAuthenticationSuccessHandler(customAuthSuccessHandler);
         return filter;
     }
 
@@ -144,22 +145,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 
     @Bean
-    public PrincipalExtractor principalExtractor(UserRepository userRepository, HttpServletRequest request){
+    public PrincipalExtractor principalExtractor(UserRepository userRepository, RoleService roleService, HttpServletRequest request){
         return map -> {
             String username = (String)map.get("email");
 
-            User user = userRepository.findUserByUsernameAndIsActiveTrue(username).orElseGet(() -> {
-                User newUser = new User();
-                newUser.setUsername(username);
-                newUser.setActive((boolean)map.get("email_verified"));
-                newUser.setFirstName((String) map.get("given_name"));
-                newUser.setLastName((String) map.get("family_name"));
-                return userRepository.save(newUser);
-            });
+            User user = userRepository.findUserByUsernameAndIsActiveTrue(username)
+                    .orElseGet(() ->
+                            userService.createUser(
+                                    new User(
+                                            username,
+                                            passwordEncoder().encode(UUID.randomUUID().toString()),
+                                            (String) map.get("given_name"),
+                                            (String) map.get("family_name"),
+                                            (boolean) map.get("email_verified"),
+                                            roleService.getRolesByName("USER")
+                                    )
+                            ));
 
-            user.setLastseen(LocalDateTime.now());
-
-            return user;
+            return (AuthenticatedPrincipal) user::getUsername;
         };
     }
 

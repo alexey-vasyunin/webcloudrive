@@ -12,7 +12,6 @@ import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.repository.RegistrationTokenRepository;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -25,16 +24,14 @@ public class UserService implements UserDetailsService {
     private final RoleService roleService;
     private final DirectoryService directoryService;
     private final RegistrationTokenRepository tokenRepository;
-    private final EntityManager entityManager;
 
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RoleService roleService, DirectoryService directoryService, RegistrationTokenRepository tokenRepository, EntityManager entityManager) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RoleService roleService, DirectoryService directoryService, RegistrationTokenRepository tokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
         this.directoryService = directoryService;
         this.tokenRepository = tokenRepository;
-        this.entityManager = entityManager;
     }
 
     public User getUserById(long id){
@@ -42,12 +39,12 @@ public class UserService implements UserDetailsService {
     }
 
     public User getUserByUsername(String username){
-        return userRepository.findByUsername(username);
+        return userRepository.findUserByUsername(username);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
+        User user = userRepository.findUserByUsername(username);
         System.out.println(user);
         if (user == null) throw new UsernameNotFoundException("User not found in database");
         return new org.springframework.security.core.userdetails.User(
@@ -63,6 +60,11 @@ public class UserService implements UserDetailsService {
                         .collect(Collectors.toList()));
     }
 
+    /**
+     * Creates new user from userDTO. Also creates directory in storage
+     * @param userDto DTO object
+     * @return User
+     */
     public User createUser(UserDto userDto){
         User user = new User();
         user.setUsername(userDto.getUsername());
@@ -77,13 +79,24 @@ public class UserService implements UserDetailsService {
     }
 
     /**
+     * Creates new user and directory based on User-object
+     * @param user
+     * @return User
+     */
+    public User createUser(User user){
+        user = userRepository.save(user);
+        directoryService.createRootDirectory(user);
+        return user;
+    }
+
+    /**
      * Confirm email
      * @param email
      * @param token
      * @return
      */
     public boolean confirmUser(String email, String token){
-        User user = userRepository.findByUsername(email);
+        User user = userRepository.findUserByUsername(email);
         if (user == null || user.isActive() || user.getToken() == null || !user.getToken().getToken().equals(token))
             return false;
 
@@ -91,5 +104,4 @@ public class UserService implements UserDetailsService {
         tokenRepository.delete(user.getToken());
         return true;
     }
-
 }
