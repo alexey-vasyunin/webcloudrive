@@ -18,16 +18,19 @@ import ru.vasyunin.springcloudrive.repository.UserRepository;
 import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
+import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class FilesService {
 
     @Value("${cloudrive.storage.directory}")
@@ -78,14 +81,14 @@ public class FilesService {
 
         // Add subdirectories to response
         result.addAll(currentDirectory.getSubdirs().stream()
-                .sorted()
+                .sorted(Comparator.comparing(DirectoryItem::getName))
                 .map(dir -> new FileItemDto(dir.getId(), dir.getName(), 0L, null, null, true))
                 .collect(Collectors.toList()));
 
         // Add filelist to response
         result.addAll(currentDirectory.getFiles().stream()
                 .filter(FileItem::isCompleted)
-                .sorted()
+                .sorted(Comparator.comparing(FileItem::getOriginFilename))
                 .map(file -> new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false))
                 .collect(Collectors.toList()));
 
