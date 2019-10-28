@@ -91,7 +91,12 @@
                         if (file.directory) {
                             row = $("<tr itemid='" + file.id + "'  class=\"directoryitem\">")
                                 .append('<td>' + file.filename + '</td>')
-                                .append('<td>&nbsp;</td>')
+                                .append((file.filename !== '..') ? '<td><div class="dropdown">\n' +
+                                    '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuDirButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
+                                    '  <div class="dropdown-menu" aria-labelledby="dropdownMenuDirButton' + file.id + ' ">\n' +
+                                    '    <a class="dropdown-item delete-dir-button" href="#" id="deleteDirButton' + file.id + '">Удалить</a>\n' +
+                                    '  </div>\n' +
+                                    '</div></td>' : '&nbsp;')
                                 .append('<td>&nbsp;</td>')
                                 .append('<td>&nbsp;</td>')
                                 .append('<td>&nbsp;</td>')
@@ -134,6 +139,18 @@
                                 filelistLoad($("#fileTable").attr("directory"));
                         });
                     });
+
+                    $(document).on('click', 'a.delete-dir-button', function (event) {
+                        let id = event.target.id.substring('deleteDirButton'.length);
+                        $.ajax({
+                            method: "DELETE",
+                            url: "/api/directory",
+                            data: { id: id }
+                        }).done(function( msg ) {
+                            filelistLoad($("#fileTable").attr("directory"));
+                        });
+                    });
+
                 }
             }
         );

@@ -51,10 +51,6 @@ public class FilesController {
     @GetMapping(value = "/download/{id}", produces = "application/octet-stream")
     public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
         User user = (User)request.getSession().getAttribute("user");
-        System.out.println(Collections.list(request.getHeaderNames()) // log headers
-                .stream()
-                .map(s -> s + ": " + request.getHeader(s))
-                .collect(Collectors.joining(System.lineSeparator())));
         FileItem fileItem = filesService.getFileById(user, id);
 
         if (fileItem == null)

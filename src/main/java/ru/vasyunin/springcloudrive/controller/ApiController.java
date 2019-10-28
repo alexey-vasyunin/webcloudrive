@@ -20,6 +20,7 @@ import ru.vasyunin.springcloudrive.utils.FileChunks;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -103,36 +104,13 @@ public class ApiController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @DeleteMapping("directory")
+    public ResponseEntity deleteDirectory(@RequestParam("id") Long id, HttpSession session) throws IOException {
+        User user = (User)session.getAttribute("user");
+        if (id == null) return ResponseEntity.badRequest().build();
+
+        directoryService.deleteDirectory(user, id);
+        return ResponseEntity.ok().build();
+    }
 
 }
-
-//
-//        Path path = Paths.get(STORAGE + "/" + user.getId());
-//        if (!path.toFile().exists() && checkDir) {
-//            try {
-//                Files.createDirectories(path);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        List<FileItemTDO> result = new ArrayList<>();
-//        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
-//            stream.forEach(p -> {
-//                if (!Files.isDirectory(p)) {
-//                    try {
-//                        // Creating FileItem DTO
-//                        FileItemTDO item = new FileItemTDO(0L,
-//                                p.getFileName().toString(),
-//                                Files.size(p),
-//                                FileUtils.getFileExtension(p),
-//                                LocalDateTime.ofInstant(Files.getLastModifiedTime(p).toInstant(), ZoneId.systemDefault()));
-//                        result.add(item);
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            });
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }

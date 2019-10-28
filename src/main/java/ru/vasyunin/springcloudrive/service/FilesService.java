@@ -78,16 +78,16 @@ public class FilesService {
 
         // Add subdirectories to response
         result.addAll(currentDirectory.getSubdirs().stream()
-                .map(dir -> {
-                    return new FileItemDto(dir.getId(), dir.getName(), 0L, null, null, true);
-                }).collect(Collectors.toList()));
+                .sorted()
+                .map(dir -> new FileItemDto(dir.getId(), dir.getName(), 0L, null, null, true))
+                .collect(Collectors.toList()));
 
         // Add filelist to response
         result.addAll(currentDirectory.getFiles().stream()
                 .filter(FileItem::isCompleted)
-                .map(file -> {
-                    return new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
-                }).collect(Collectors.toList()));
+                .sorted()
+                .map(file -> new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false))
+                .collect(Collectors.toList()));
 
         return result;
     }
