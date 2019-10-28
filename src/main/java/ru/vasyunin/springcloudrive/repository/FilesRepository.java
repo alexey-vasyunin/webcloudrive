@@ -15,4 +15,5 @@ public interface FilesRepository extends JpaRepository<FileItem, Long> {
     FileItem findFileItemByUserAndId(User user, long id);
     FileItem findFileItemByUserAndDirectoryAndFilename(User user, DirectoryItem directory, String filename);
     boolean deleteFileItemByUserAndId(User user, long id);
+    List<FileItem> findFileItemsByUserAndDirectoryId(User user, long id);
 }

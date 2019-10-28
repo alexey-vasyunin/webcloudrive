@@ -11,7 +11,12 @@ import ru.vasyunin.springcloudrive.repository.UserRepository;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class DirectoryService {
@@ -48,6 +53,29 @@ public class DirectoryService {
         item.setName("root");
         FileUtils.createSubfolder(STORAGE + File.separator + user.getId());
         return directoryRepository.save(item);
+    }
+
+    public void deleteDirectory(User user, long id) {
+
+        DirectoryItem di = directoryRepository.findDirectoryItemByUserAndId(user, id);
+        List<DirectoryItem> subdirs = di.getSubdirs();
+        subdirs.forEach(directoryItem -> deleteDirectory(user, directoryItem.getId()));
+
+        final AtomicBoolean ok = new AtomicBoolean(true);
+        filesRepository.findFileItemsByUserAndDirectoryId(user, id)
+                .forEach(fileItem -> {
+                    try {
+                        Files.delete(Paths.get(STORAGE + File.separator + user.getId() + File.separator + fileItem.getFilename()));
+                        filesRepository.delete(fileItem);
+                    } catch (NoSuchFileException e) {
+                        filesRepository.delete(fileItem);
+                    } catch (IOException e) {
+                        ok.set(false);
+                        e.printStackTrace();
+                    }
+                });
+        if (ok.get())
+            directoryRepository.deleteById(id);
     }
 
 }
