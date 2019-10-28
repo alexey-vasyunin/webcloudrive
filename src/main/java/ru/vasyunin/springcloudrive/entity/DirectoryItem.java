@@ -44,4 +44,10 @@ public class DirectoryItem {
                 ", parentId=" + parentId +
                 '}';
     }
+
+    public DirectoryItem(DirectoryItem parent, String name, User user) {
+        this.name = name;
+        this.user = user;
+        this.parent = parent;
+    }
 }

@@ -44,6 +44,26 @@
         $("#fileup").click();
     });
 
+    $(document).on('submit', '#newdirform', function (event) {
+        event.preventDefault()
+        console.log(event);
+        let headers = {};
+        headers[header] = token;
+
+        $.ajax({
+            type: 'put',
+            url: '/api/directory',
+            headers: headers,
+            data: {
+                id: $("#fileTable").attr("directory"),
+                name: $("#dirname").val()
+            },
+            success: function () {
+                filelistLoad($("#fileTable").attr("directory"));
+            }
+        })
+    });
+
 
 
     var r = new Resumable({

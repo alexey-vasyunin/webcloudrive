@@ -20,6 +20,7 @@ import ru.vasyunin.springcloudrive.utils.FileChunks;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -110,6 +111,18 @@ public class ApiController {
         if (id == null) return ResponseEntity.badRequest().build();
 
         directoryService.deleteDirectory(user, id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Transactional
+    @PutMapping("directory")
+    public ResponseEntity newDirectory(@RequestParam("id") Long id, @RequestParam("name") String name, HttpSession session){
+        User user = (User)session.getAttribute("user");
+        DirectoryItem parent = directoryService.getDirectoryById(user, id);
+        if (parent == null) return ResponseEntity.badRequest().build();
+
+        directoryService.addNewDirectory(user, parent.getId(), name);
+
         return ResponseEntity.ok().build();
     }
 

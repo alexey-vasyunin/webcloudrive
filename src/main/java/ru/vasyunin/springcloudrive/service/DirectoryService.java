@@ -10,6 +10,7 @@ import ru.vasyunin.springcloudrive.repository.FilesRepository;
 import ru.vasyunin.springcloudrive.repository.UserRepository;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
+import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
+@Transactional
 public class DirectoryService {
     @Value("${cloudrive.storage.directory}")
     private String STORAGE;
@@ -76,6 +78,14 @@ public class DirectoryService {
                 });
         if (ok.get())
             directoryRepository.deleteById(id);
+    }
+
+    public boolean addNewDirectory(User user, long parentid, String name){
+        DirectoryItem parent = directoryRepository.findDirectoryItemByUserAndId(user, parentid);
+        DirectoryItem newDirectory = new DirectoryItem(parent, name, user);
+        directoryRepository.save(newDirectory);
+        parent.getSubdirs().add(newDirectory);
+        return true;
     }
 
 }
