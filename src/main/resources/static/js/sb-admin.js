@@ -40,18 +40,19 @@
         event.preventDefault();
     });
 
+    // Upload button
     $(document).on('click', '#uploadbutton', function (event) {
         $("#fileup").click();
     });
 
+    // New directory button
     $(document).on('submit', '#newdirform', function (event) {
-        event.preventDefault()
-        console.log(event);
+        event.preventDefault();
         let headers = {};
         headers[header] = token;
 
         $.ajax({
-            type: 'put',
+            type: 'post',
             url: '/api/directory',
             headers: headers,
             data: {
@@ -67,7 +68,7 @@
 
 
     var r = new Resumable({
-        target: '/api/upload/chunk',
+        target: '/api/file',
         chunkSize: 1024*128,
         testChunks: false,
         simultaneousUploads: 3
@@ -82,12 +83,6 @@
     });
     r.on('fileSuccess', function(file,message){
         filelistLoad($("#fileTable").attr("directory"));
-        console.log("fileSuccess");
-        console.log(file, message);
-    });
-    r.on('fileError', function(file, message){
-        console.log("fileError");
-        console.log(file, message);
     });
 
     function filelistLoad(directoryId) {
@@ -98,8 +93,8 @@
         $("#fileTable").attr("directory", directoryId);
 
         $.ajax({
-                type: 'post',
-                url: '/api/filelist/directory/' + directoryId,
+                type: 'get',
+                url: '/api/directory/' + directoryId,
                 headers: headers,
                 success: function (data) {
                     $(document).off('click', 'tr.directoryitem');
@@ -123,7 +118,7 @@
                                 .append('</tr>');
                         } else {
                             row = $("<tr itemid='" + file.id + "' class=\"fileitem\">")
-                                .append('<td><a href="/file/download/' + file.id + '" class="text-muted">' + file.filename + '</a></td>')
+                                .append('<td><a href="/api/file/' + file.id + '" class="text-muted">' + file.filename + '</a></td>')
                                 .append('<td><div class="dropdown">\n' +
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton' + file.id + ' ">\n' +
@@ -146,14 +141,14 @@
 
                     $(document).on('click', 'a.download-button', function (event) {
                         let id = event.target.id.substring('downloadButton'.length);
-                        window.location = '/file/download/' + id;
+                        window.location = '/api/file/' + id;
                     });
                     $(document).on('click', 'a.delete-button', function (event) {
                         let id = event.target.id.substring('deleteButton'.length);
                         console.log(id);
                         $.ajax({
                             method: "DELETE",
-                            url: "/file/delete",
+                            url: "/api/file",
                             data: { id: id }
                         }).done(function( msg ) {
                                 filelistLoad($("#fileTable").attr("directory"));
