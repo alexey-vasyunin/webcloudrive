@@ -1,5 +1,6 @@
 package ru.vasyunin.springcloudrive.service;
 
+import com.ibm.icu.text.Transliterator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +21,7 @@ import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import javax.transaction.Transactional;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -38,29 +40,37 @@ public class FilesService {
 
     private final FilesRepository filesRepository;
     private final DirectoryRepository directoryRepository;
-    private final UserRepository userRepository;
 
-    public FilesService(FilesRepository filesRepository, DirectoryRepository directoryRepository, UserRepository userRepository) {
+    public FilesService(FilesRepository filesRepository, DirectoryRepository directoryRepository) {
         this.filesRepository = filesRepository;
         this.directoryRepository = directoryRepository;
-        this.userRepository = userRepository;
     }
 
-    public List<FileItemDto> getFilesInDirectory(User user, Long id) {
-        return filesRepository.findAllByUser(user).stream().map(file -> {
-            return new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false);
-        }).collect(Collectors.toList());
-    }
-
+    /**
+     * Get FileItem by id
+     * @param user
+     * @param id
+     * @return
+     */
     public FileItem getFileById(User user, long id){
         return filesRepository.findFileItemByUserAndId(user, id);
     }
 
+    /**
+     * Downloading file
+     * @param fileItem
+     * @param user
+     * @return
+     * @throws FileNotFoundException
+     */
     public ResponseEntity<InputStreamResource> getFileResponse(FileItem fileItem, User user) throws FileNotFoundException {
         File file = new File(STORAGE + File.separator + user.getId() + File.separator  + fileItem.getFilename());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+
+        Transliterator toLatinTrans = Transliterator.getInstance("Russian-Latin/BGN");
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"" + fileItem.getOriginFilename() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"" + toLatinTrans.transliterate(fileItem.getOriginFilename()).replaceAll("[^A-Za-z0-9\\.]", "_") + "\"")
                 .contentLength(file.length())
                 .body(resource);
     }
@@ -147,10 +157,10 @@ public class FilesService {
 
         try {
             Files.delete(Paths.get(STORAGE + File.separator + user.getId() + File.separator  + fileItem.getFilename()));
-            filesRepository.delete(fileItem);
+            filesRepository.deleteById(fileId);
             return true;
         } catch (NoSuchFileException e) {
-            filesRepository.delete(fileItem);
+            filesRepository.deleteById(fileId);
         } catch (IOException e) {
             e.printStackTrace();
         }

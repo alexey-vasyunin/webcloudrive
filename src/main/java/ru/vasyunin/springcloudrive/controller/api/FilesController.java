@@ -1,45 +1,81 @@
-package ru.vasyunin.springcloudrive.controller;
+package ru.vasyunin.springcloudrive.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
+import ru.vasyunin.springcloudrive.service.DirectoryService;
 import ru.vasyunin.springcloudrive.service.FilesService;
-import ru.vasyunin.springcloudrive.service.UserService;
+import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
+import ru.vasyunin.springcloudrive.utils.FileChunks;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.FileNotFoundException;
-import java.util.Collections;
-import java.util.stream.Collectors;
-
-@RestController
-@RequestMapping("/file")
-public class FilesController {
-    private final UserService userService;
-    private final FilesService filesService;
-
-    @Value("${cloudrive.storage.directory}")
-    private String STORAGE;
-
-    @Value("${cloudrive.storage.create_if_not_exists}")
-    private boolean checkDir;
-
-
-    @Autowired
-    public FilesController(UserService userService, FilesService filesService) {
-        this.userService = userService;
-        this.filesService = filesService;
-    }
 
 
 //    @Secured({"ADMIN"})
 //    @PreAuthorize()
+
+
+@RestController
+@RequestMapping("/api/file")
+public class FilesController {
+    private final FilesService filesService;
+    private final DirectoryService directoryService;
+
+    @Value("${cloudrive.storage.directory}")
+    private String STORAGE;
+
+    @Value("${cloudrive.storage.tempfilder}")
+    private String TEMP_FOLDER;
+
+    @Autowired
+    public FilesController(FilesService filesService, DirectoryService directoryService) {
+        this.filesService = filesService;
+        this.directoryService = directoryService;
+    }
+
+
+    /*
+           Upload file (by chunks)
+     */
+    @PostMapping
+    public ResponseEntity uploadChunkOfFile(@RequestParam("file") MultipartFile file,
+                                            HttpServletRequest request,
+                                            HttpSession session) {
+
+        // Get User from session
+        User user = (User)session.getAttribute("user");
+
+        synchronized (user) {
+            // Get information about downloaded chunks
+            FileChunks chunks = (FileChunks) session.getAttribute("chunks");
+            if (chunks == null) {
+                chunks = new FileChunks();
+                session.setAttribute("chunks", chunks);
+            }
+
+            // Get info about chunk from request
+            FileChunkInfo chunkInfo = new FileChunkInfo(request);
+            // Save fileinfo in database
+            FileItem fileItem = filesService.processChunk(user, chunkInfo, file);
+
+            chunks.addChunk(chunkInfo);
+
+            // If file is downloaded set complited in FileItem
+            if (chunks.isDone(chunkInfo)) {
+                filesService.setFileComplited(fileItem);
+            }
+        }
+        return new ResponseEntity(HttpStatus.OK);
+    }
 
 
     /**
@@ -48,7 +84,7 @@ public class FilesController {
      * @return Returns content of file. If file is not exist in database table return 404 (HttpStatus.NOT_FOUND). If can't
      * reads file returns 500 (HttpStatus.INTERNAL_SERVER_ERROR)
      */
-    @GetMapping(value = "/download/{id}", produces = "application/octet-stream")
+    @GetMapping(value = "/{id}", produces = "application/octet-stream")
     public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
         User user = (User)request.getSession().getAttribute("user");
         FileItem fileItem = filesService.getFileById(user, id);
@@ -64,13 +100,15 @@ public class FilesController {
         }
     }
 
+
+
     /**
      * Delete file
      * @param id
      * @param request
      * @return
      */
-    @DeleteMapping(value = "/delete")
+    @DeleteMapping
     public ResponseEntity deleteFile(@RequestParam Long id, HttpServletRequest request){
         if (id == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 
