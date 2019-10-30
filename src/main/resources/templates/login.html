@@ -17,7 +17,6 @@
   <link th:href="@{/css/sb-admin.css}" rel="stylesheet">
   <link th:href="@{/css/signin.css}" rel="stylesheet">
 
-  <script rel="script" th:src="@{/js/signin.js}"></script>
 
 </head>
 
@@ -55,8 +54,8 @@
           <a class="d-block small" th:href="@{forgot-password}">Forgot Password?</a>
         </div>
         <hr class="my-4">
-        <button class="btn btn-sm btn-google btn-block text-uppercase" type="button" onclick="signInGoogle();"><i class="fab fa-google mr-2"></i> Sign in with Google</button>
-        <button class="btn btn-sm btn-facebook btn-block text-uppercase" type="button" onclick="signInFacebook();"><i class="fab fa-facebook-f mr-2"></i> Sign in with Facebook</button>
+        <a class="btn btn-sm btn-google btn-block text-uppercase" href="/login/google"><i class="fab fa-google mr-2"></i> Sign in with Google</a>
+        <a class="btn btn-sm btn-facebook btn-block text-uppercase" href="/login/facebook"><i class="fab fa-facebook-f mr-2"></i> Sign in with Facebook</a>
       </div>
     </div>
   </div>

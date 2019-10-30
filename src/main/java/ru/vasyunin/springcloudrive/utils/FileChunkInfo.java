@@ -1,10 +1,6 @@
 package ru.vasyunin.springcloudrive.utils;
 
-import lombok.Data;
-import lombok.Getter;
-
 import javax.servlet.http.HttpServletRequest;
-import javax.swing.*;
 import java.util.UUID;
 
 public class FileChunkInfo {

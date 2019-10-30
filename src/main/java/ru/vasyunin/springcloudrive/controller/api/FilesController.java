@@ -28,7 +28,6 @@ import java.io.FileNotFoundException;
 @RequestMapping("/api/file")
 public class FilesController {
     private final FilesService filesService;
-    private final DirectoryService directoryService;
 
     @Value("${cloudrive.storage.directory}")
     private String STORAGE;
@@ -37,9 +36,8 @@ public class FilesController {
     private String TEMP_FOLDER;
 
     @Autowired
-    public FilesController(FilesService filesService, DirectoryService directoryService) {
+    public FilesController(FilesService filesService) {
         this.filesService = filesService;
-        this.directoryService = directoryService;
     }
 
 

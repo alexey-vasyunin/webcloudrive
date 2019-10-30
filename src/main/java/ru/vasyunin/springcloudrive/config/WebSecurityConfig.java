@@ -70,9 +70,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .loginPage("/login")
                     .permitAll()
                     .successHandler(customAuthSuccessHandler)
-//                .and()
-//                    .oauth2Login()
-//                    .successHandler(customAuthSuccessHandler)
                 .and()
                     .logout().permitAll()
                 .and()
@@ -165,5 +162,4 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             return (AuthenticatedPrincipal) user::getUsername;
         };
     }
-
 }
