@@ -31,16 +31,4 @@ public class MainController {
         model.addAttribute("root", root);
         return "index";
     }
-
-    @GetMapping("/home")
-    public String homePage(){
-        return "home";
-    }
-
-    @GetMapping("/hello")
-    public String helloPage(){
-        return "hello";
-    }
-
-
 }

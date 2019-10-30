@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
-import ru.vasyunin.springcloudrive.service.DirectoryService;
 import ru.vasyunin.springcloudrive.service.FilesService;
 import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileChunks;

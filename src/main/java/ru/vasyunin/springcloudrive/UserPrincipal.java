@@ -49,13 +49,19 @@ public class UserPrincipal implements UserDetails {
         return user.isActive();
     }
 
-    public String getFirstname(){ return user.getFirstName(); }
+    public String getFirstname() {
+        return user.getFirstName();
+    }
 
-    public String getLastname(){ return user.getLastName(); }
+    public String getLastname() {
+        return user.getLastName();
+    }
 
-    public LocalDateTime getLastseen(){ return user.getLastseen(); }
+    public LocalDateTime getLastseen() {
+        return user.getLastseen();
+    }
 
-    public long getId(){
+    public long getId() {
         return user.getId();
     }
 }

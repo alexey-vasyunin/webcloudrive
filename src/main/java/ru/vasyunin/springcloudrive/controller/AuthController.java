@@ -14,7 +14,6 @@ import ru.vasyunin.springcloudrive.service.MailService;
 import ru.vasyunin.springcloudrive.service.UserService;
 
 import javax.validation.Valid;
-import java.util.Arrays;
 import java.util.Base64;
 
 @Controller
