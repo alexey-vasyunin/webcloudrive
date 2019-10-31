@@ -144,7 +144,7 @@
         <div class="card mb-3">
           <div class="card-header">
             <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
-              <div><i class="fas fa-table"></i> Ваши файлы</div>
+              <div><i class="fas fa-table"></i>Ваши файлы</div>
               <div style="display: inline-block" class="dropleft">
                 <button class="btn btn-outline-primary btn-sm" id="newdirbutton" data-toggle="dropdown" data-display="static" aria-haspopup="true" aria-expanded="false"><i class="fas fa-folder-plus"></i></button>
                 <div class="dropdown-menu" aria-labelledby="newdirbutton">
@@ -178,6 +178,30 @@
           <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
         </div>
 
+        <div class="modal fade" id="renameModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="renameModalLabel">New name</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <form>
+                  <div class="form-group">
+                    <label for="new-name" class="col-form-label">Name:</label>
+                    <input type="text" class="form-control" id="new-name">
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
       <!-- /.container-fluid -->

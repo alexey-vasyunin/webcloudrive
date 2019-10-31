@@ -109,6 +109,7 @@
                                 .append((file.filename !== '..') ? '<td><div class="dropdown">\n' +
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuDirButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuDirButton' + file.id + ' ">\n' +
+                                    '    <a class="dropdown-item rename-dir-button" href="#" data-itemid="' + file.id + '" data-itemtype="directory" id="renameDirButton' + file.id + '" data-toggle="modal" data-target="#renameModal" data-whatever="@mdo">Переименовать</a>\n' +
                                     '    <a class="dropdown-item delete-dir-button" href="#" id="deleteDirButton' + file.id + '">Удалить</a>\n' +
                                     '  </div>\n' +
                                     '</div></td>' : '&nbsp;')
@@ -123,6 +124,7 @@
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton' + file.id + ' ">\n' +
                                     '    <a class="dropdown-item download-button" href="#" id="downloadButton' + file.id + '">Скачать</a>\n' +
+                                    '    <a class="dropdown-item rename-button" href="#" data-itemid="' + file.id + '"  data-itemtype="file" id="renameButton' + file.id + '">Переименовать</a>\n' +
                                     '    <a class="dropdown-item delete-button" href="#" id="deleteButton' + file.id + '">Удалить</a>\n' +
                                     '  </div>\n' +
                                     '</div></td>')
@@ -171,5 +173,15 @@
         );
     }
     filelistLoad($("#fileTable").attr("directory"));
+
+    $('#renameModal').on('show.bs.modal', function (event) {
+        let button = $(event.relatedTarget); // Button that triggered the modal
+        let recipient = button.data('whatever'); // Extract info from data-* attributes
+        let id = button.data('itemid'); // Extract info from data-* attributes
+        let type = button.data('itemtype'); // Extract info from data-* attributes
+        let modal = $(this);
+        modal.find('.modal-body input').val(recipient);
+        console.log(id);
+    });
 
 })(jQuery); // End of use strict
