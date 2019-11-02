@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 @RequestMapping("/api/file")
 public class FilesController {
     private final FilesService filesService;
+    private final User user;
 
     @Value("${cloudrive.storage.directory}")
     private String STORAGE;
@@ -35,8 +36,9 @@ public class FilesController {
     private String TEMP_FOLDER;
 
     @Autowired
-    public FilesController(FilesService filesService) {
+    public FilesController(FilesService filesService, User sessionUser) {
         this.filesService = filesService;
+        this.user = sessionUser;
     }
 
 
@@ -47,9 +49,6 @@ public class FilesController {
     public ResponseEntity uploadChunkOfFile(@RequestParam("file") MultipartFile file,
                                             HttpServletRequest request,
                                             HttpSession session) {
-
-        // Get User from session
-        User user = (User)session.getAttribute("user");
 
         synchronized (user) {
             // Get information about downloaded chunks
@@ -83,7 +82,6 @@ public class FilesController {
      */
     @GetMapping(value = "/{id}", produces = "application/octet-stream")
     public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
-        User user = (User)request.getSession().getAttribute("user");
         FileItem fileItem = filesService.getFileById(user, id);
 
         if (fileItem == null)
@@ -109,7 +107,6 @@ public class FilesController {
     public ResponseEntity deleteFile(@RequestParam Long id, HttpServletRequest request){
         if (id == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 
-        User user = (User)request.getSession().getAttribute("user");
         if (filesService.deleteFile(user, id))
             return ResponseEntity.ok().build();
 

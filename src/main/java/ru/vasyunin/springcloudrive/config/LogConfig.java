@@ -6,12 +6,12 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
 @Configuration
 public class LogConfig {
-    @Bean
-    public CommonsRequestLoggingFilter requestLoggingFilter(){
-        CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
-        loggingFilter.setIncludeClientInfo(false);
-        loggingFilter.setIncludeQueryString(true);
-        loggingFilter.setIncludePayload(false);
-        return loggingFilter;
-    }
+//    @Bean
+//    public CommonsRequestLoggingFilter requestLoggingFilter(){
+//        CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
+//        loggingFilter.setIncludeClientInfo(false);
+//        loggingFilter.setIncludeQueryString(false);
+//        loggingFilter.setIncludePayload(false);
+//        return loggingFilter;
+//    }
 }
