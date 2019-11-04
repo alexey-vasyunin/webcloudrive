@@ -37,18 +37,30 @@ public class DirectoryService {
         this.filesRepository = filesRepository;
     }
 
-    public DirectoryItem getDirectoryByParent(User user, Long id){
-        return directoryRepository.findDirectoryItemByUserAndParentId(user, id);
-    }
-
+    /**
+     * Find DirectoryItem for directory
+     * @param user Owner iof directory
+     * @param id Identificator of directory
+     * @return DirectoryItem object of directory
+     */
     public DirectoryItem getDirectoryById(User user, long id){
         return directoryRepository.findDirectoryItemByUserAndId(user, id);
     }
 
+    /**
+     * Find users root directory (must have null in parentDirectory)
+     * @param user Owner of directory
+     * @return DurectoryItem
+     */
     public DirectoryItem getRootDirectory(User user){
         return directoryRepository.findDirectoryItemByUserAndParentIsNull(user);
     }
 
+    /**
+     * Function create inital directory in storage and database for new users
+     * @param user Created user
+     * @return DirectoryItem object of this folder
+     */
     public DirectoryItem createRootDirectory(User user){
         DirectoryItem item = new DirectoryItem();
         item.setUser(user);
@@ -57,8 +69,12 @@ public class DirectoryService {
         return directoryRepository.save(item);
     }
 
+    /**
+     * Function deletes user's files in directory and records in database
+     * @param user User who's deleted directory
+     * @param id
+     */
     public void deleteDirectory(User user, long id) {
-
         DirectoryItem di = directoryRepository.findDirectoryItemByUserAndId(user, id);
         List<DirectoryItem> subdirs = di.getSubdirs();
         subdirs.forEach(directoryItem -> deleteDirectory(user, directoryItem.getId()));
@@ -80,14 +96,27 @@ public class DirectoryService {
             directoryRepository.deleteById(id);
     }
 
-    public boolean addNewDirectory(User user, long parentid, String name){
-        DirectoryItem parent = directoryRepository.findDirectoryItemByUserAndId(user, parentid);
+
+    /**
+     * Function create new directory in the database. It use id of directory like as parent directory
+     * @param user User who's created directory
+     * @param parentId Id of parent directory
+     * @param name Name of directory
+     */
+    public void addNewDirectory(User user, long parentId, String name){
+        DirectoryItem parent = directoryRepository.findDirectoryItemByUserAndId(user, parentId);
         DirectoryItem newDirectory = new DirectoryItem(parent, name, user);
         directoryRepository.save(newDirectory);
         parent.getSubdirs().add(newDirectory);
-        return true;
     }
 
+    /**
+     * Function updates directory name
+     * @param user User who's updated directory name
+     * @param id Id of directory
+     * @param name New name of directory
+     * @return Returns true if directory is updated and false if not
+     */
     public boolean updateDirectory(User user, Long id, String name) {
         return directoryRepository.setName(user, id, name) > 0;
     }

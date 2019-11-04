@@ -103,8 +103,8 @@
                     data.content.forEach(function (file) {
                         let row;
                         if (file.directory) {
-                            row = $("<tr itemid='" + file.id + "'>")
-                                .append('<td  class=\"directoryitem\">' + file.filename + '</td>')
+                            row = $("<tr>")
+                                .append('<td  class="directoryitem" itemid="' + file.id + '">' + file.filename + '</td>')
                                 .append((file.filename !== '..') ? '<td><div class="dropdown">\n' +
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuDirButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuDirButton' + file.id + ' ">\n' +

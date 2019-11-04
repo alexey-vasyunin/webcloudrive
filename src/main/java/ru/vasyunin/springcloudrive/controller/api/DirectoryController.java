@@ -50,7 +50,7 @@ public class DirectoryController {
         User user = (User) session.getAttribute("user");
 
         if (dirId == null || dirId == 0){
-            currentDirectory = directoryService.getDirectoryByParent(user, null);
+            currentDirectory = directoryService.getRootDirectory(user);
         } else {
             currentDirectory = directoryService.getDirectoryById(user, dirId);
         }
