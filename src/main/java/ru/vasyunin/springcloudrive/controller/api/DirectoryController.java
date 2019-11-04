@@ -11,7 +11,9 @@ import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.service.DirectoryService;
 import ru.vasyunin.springcloudrive.service.FilesService;
 
+import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,7 +23,6 @@ public class DirectoryController {
 
     private final FilesService filesService;
     private final DirectoryService directoryService;
-    private final User user;
 
     @Value("${cloudrive.storage.directory}")
     private String STORAGE;
@@ -30,10 +31,9 @@ public class DirectoryController {
     private String TEMP_FOLDER;
 
     @Autowired
-    public DirectoryController(FilesService filesService, DirectoryService directoryService, User sessionUser) {
+    public DirectoryController(FilesService filesService, DirectoryService directoryService) {
         this.filesService = filesService;
         this.directoryService = directoryService;
-        this.user = sessionUser;
     }
 
     /**
@@ -41,7 +41,10 @@ public class DirectoryController {
      * @return
      */
     @GetMapping("/{id}")
-    public FilelistDto getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId){
+    public FilelistDto getFileListFromStorage(@PathVariable(name = "id", required = false)  Long dirId, HttpSession session){
+        // Get User from session
+        User user = (User)session.getAttribute("user");
+
         // Get current directory (root or required)
         DirectoryItem currentDirectory;
 
@@ -62,7 +65,10 @@ public class DirectoryController {
 
 
     @DeleteMapping
-    public ResponseEntity deleteDirectory(@RequestParam("id") Long id) {
+    public ResponseEntity deleteDirectory(@RequestParam("id") Long id, HttpSession session) throws IOException {
+        User user = (User)session.getAttribute("user");
+        if (id == null) return ResponseEntity.badRequest().build();
+
         directoryService.deleteDirectory(user, id);
         return ResponseEntity.ok().build();
     }
@@ -70,7 +76,8 @@ public class DirectoryController {
 
     @Transactional
     @PostMapping
-    public ResponseEntity newDirectory(@RequestParam("id") Long id, @RequestParam("name") String name){
+    public ResponseEntity newDirectory(@RequestParam("id") Long id, @RequestParam("name") String name, HttpSession session){
+        User user = (User)session.getAttribute("user");
         DirectoryItem parent = directoryService.getDirectoryById(user, id);
         if (parent == null) return ResponseEntity.badRequest().build();
 
