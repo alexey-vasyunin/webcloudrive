@@ -178,6 +178,32 @@
           <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
         </div>
 
+        <div class="modal fade" id="renameModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="renameModalLabel">New name</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <form>
+                  <div class="form-group">
+                    <label for="new-name" class="col-form-label">Name:</label>
+                    <input type="text" class="form-control" id="new-name">
+                    <input type="hidden" name="id" value="" id="id">
+                    <input type="hidden" name="type" value="" id="type">
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveRenameButton">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
       <!-- /.container-fluid -->
@@ -242,7 +268,6 @@
 
   <!-- Demo scripts for this page-->
   <script th:src="@{js/demo/datatables-demo.js}"></script>
-  <script th:src="@{js/demo/chart-area-demo.js}"></script>
 
 </body>
 

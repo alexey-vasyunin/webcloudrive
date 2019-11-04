@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
+@Transactional
 @RequestMapping("/api/directory")
 public class DirectoryController {
 
@@ -72,7 +73,6 @@ public class DirectoryController {
     }
 
 
-    @Transactional
     @PostMapping
     public ResponseEntity newDirectory(@RequestParam("id") Long id, @RequestParam("name") String name){
         User user = (User) session.getAttribute("user");
@@ -84,4 +84,14 @@ public class DirectoryController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping
+    public ResponseEntity renameDirectory(@RequestParam Long id, @RequestParam String name){
+        if (name.trim().equals("")) return ResponseEntity.badRequest().build();
+
+        User user = (User) session.getAttribute("user");
+        if (directoryService.updateDirectory(user, id, name))
+            return ResponseEntity.ok().build();
+        else
+            return ResponseEntity.badRequest().build();
+    }
 }

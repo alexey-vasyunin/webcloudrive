@@ -97,18 +97,18 @@
                 url: '/api/directory/' + directoryId,
                 headers: headers,
                 success: function (data) {
-                    $(document).off('click', 'tr.directoryitem');
-                    $(document).off('click', 'tr.fileitem');
+                    $(document).off('click', 'td.directoryitem');
                     $("#fileTable tbody tr").remove();
 
                     data.content.forEach(function (file) {
                         let row;
                         if (file.directory) {
-                            row = $("<tr itemid='" + file.id + "'  class=\"directoryitem\">")
-                                .append('<td>' + file.filename + '</td>')
+                            row = $("<tr itemid='" + file.id + "'>")
+                                .append('<td  class=\"directoryitem\">' + file.filename + '</td>')
                                 .append((file.filename !== '..') ? '<td><div class="dropdown">\n' +
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuDirButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuDirButton' + file.id + ' ">\n' +
+                                    '    <a class="dropdown-item rename-dir-button" href="#" data-itemid="' + file.id + '" data-itemtype="directory" id="renameDirButton' + file.id + '" data-toggle="modal" data-target="#renameModal" data-whatever="' + file.filename + '">Переименовать</a>\n' +
                                     '    <a class="dropdown-item delete-dir-button" href="#" id="deleteDirButton' + file.id + '">Удалить</a>\n' +
                                     '  </div>\n' +
                                     '</div></td>' : '&nbsp;')
@@ -123,6 +123,7 @@
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton' + file.id + ' ">\n' +
                                     '    <a class="dropdown-item download-button" href="#" id="downloadButton' + file.id + '">Скачать</a>\n' +
+                                    '    <a class="dropdown-item rename-button" href="#" data-itemid="' + file.id + '"  data-itemtype="file" id="renameButton' + file.id + '" data-toggle="modal" data-target="#renameModal" data-whatever="' + file.filename + '">Переименовать</a>\n' +
                                     '    <a class="dropdown-item delete-button" href="#" id="deleteButton' + file.id + '">Удалить</a>\n' +
                                     '  </div>\n' +
                                     '</div></td>')
@@ -135,7 +136,7 @@
                         // Need to change Resumable query to current directory
                     });
 
-                    $(document).on('click', 'tr.directoryitem', function (event) {
+                    $(document).on('click', 'td.directoryitem', function (event) {
                         filelistLoad($(this).attr("itemid"));
                     });
 
@@ -171,5 +172,46 @@
         );
     }
     filelistLoad($("#fileTable").attr("directory"));
+
+    $('#renameModal').on('show.bs.modal', function (event) {
+        let button = $(event.relatedTarget); // Button that triggered the modal
+        let recipient = button.data('whatever'); // Extract info from data-* attributes
+        let id = button.data('itemid'); // Extract info from data-* attributes
+        let type = button.data('itemtype'); // Extract info from data-* attributes
+        let modal = $(this);
+        modal.find('.modal-body input#new-name').val(recipient);
+        modal.find('.modal-body input#id').val(id);
+        modal.find('.modal-body input#type').val(type);
+    });
+
+    $('#saveRenameButton').on('click', function (event) {
+        let name = $('.modal-body input#new-name').val();
+        let id = $('.modal-body input#id').val();
+        let type = $('.modal-body input#type').val();
+        let url = '';
+        switch (type) {
+            case "file": url = '/api/file'; break;
+            case "directory": url = '/api/directory'; break;
+        }
+
+        let headers = {};
+        headers[header] = token;
+
+        $.ajax({
+            type: 'put',
+            url: url,
+            headers: headers,
+            data: {
+                id: id,
+                name: name
+            },
+            success: function (data) {
+                filelistLoad($("#fileTable").attr("directory"));
+            }
+        });
+
+    });
+
+
 
 })(jQuery); // End of use strict

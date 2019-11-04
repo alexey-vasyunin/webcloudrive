@@ -115,4 +115,14 @@ public class FilesController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
+    @PutMapping
+    public ResponseEntity renameFile(@RequestParam Long id, @RequestParam String name){
+        if (name.trim().equals("")) return ResponseEntity.badRequest().build();
+
+        User user = (User) session.getAttribute("user");
+        if (filesService.updateFile(user, id, name))
+            return ResponseEntity.ok().build();
+        else
+            return ResponseEntity.badRequest().build();
+    }
 }

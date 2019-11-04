@@ -88,4 +88,7 @@ public class DirectoryService {
         return true;
     }
 
+    public boolean updateDirectory(User user, Long id, String name) {
+        return directoryRepository.setName(user, id, name) > 0;
+    }
 }

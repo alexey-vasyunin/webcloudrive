@@ -15,13 +15,11 @@ import ru.vasyunin.springcloudrive.entity.FileItem;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.repository.DirectoryRepository;
 import ru.vasyunin.springcloudrive.repository.FilesRepository;
-import ru.vasyunin.springcloudrive.repository.UserRepository;
 import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
 import javax.transaction.Transactional;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -165,5 +163,9 @@ public class FilesService {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean updateFile(User user, long id, String name) {
+        return filesRepository.setName(user, id, name) > 0;
     }
 }
