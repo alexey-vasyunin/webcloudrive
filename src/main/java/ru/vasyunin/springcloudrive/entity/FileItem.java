@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -35,6 +36,9 @@ public class FileItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "directory_id")
     private DirectoryItem directory;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "file")
+    private List<FilePreview> previews;
 
     @Column(name = "last_modified")
     private LocalDateTime last_modified;
