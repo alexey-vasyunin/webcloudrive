@@ -95,4 +95,10 @@ create unique index registration_token_user_id_uindex
 
 
 
+create table files_previews
+(
+    file_id bigint not null	constraint previews_files_file_id_fk references files,
+    filename varchar(36) default uuid_generate_v4()
+);
+
 
