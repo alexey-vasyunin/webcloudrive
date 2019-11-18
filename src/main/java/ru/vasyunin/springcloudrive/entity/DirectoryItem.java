@@ -34,7 +34,7 @@ public class DirectoryItem {
     private User user;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "directory")
-    private List<FileItem> files;
+    private List<FileEntity> files;
 
     @Override
     public String toString() {

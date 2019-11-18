@@ -3,7 +3,6 @@ package ru.vasyunin.springcloudrive.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -61,7 +60,7 @@ public class User {
     private List<DirectoryItem> directories;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
-    private List<FileItem> files;
+    private List<FileEntity> files;
 
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "user")
     private RegistrationToken token;

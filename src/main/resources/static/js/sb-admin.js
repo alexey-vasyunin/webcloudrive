@@ -101,6 +101,7 @@
                     $("#fileTable tbody tr").remove();
 
                     data.content.forEach(function (file) {
+                        console.log(file);
                         let row;
                         if (file.directory) {
                             row = $("<tr>")
@@ -118,7 +119,7 @@
                                 .append('</tr>');
                         } else {
                             row = $("<tr itemid='" + file.id + "' class=\"fileitem\">")
-                                .append('<td><a href="/api/file/' + file.id + '" class="text-muted">' + file.filename + '</a></td>')
+                                .append('<td><a href="/api/file/' + file.id + '"  tabindex="0" itemid="' + file.id + '" class="text-muted" ' + ((file.preview.filenames.length > 0)? ' data-toggle="popover" data-trigger="hover" data-content="***********************" data-container="body" ' : '') + '>' + file.filename + '</a></td>')
                                 .append('<td><div class="dropdown">\n' +
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton' + file.id + ' ">\n' +
@@ -166,6 +167,8 @@
                             filelistLoad($("#fileTable").attr("directory"));
                         });
                     });
+
+                    // $(".preview").each(function(a,b,c){ console.log($(b).attr('itemid')) });
 
                 }
             }
