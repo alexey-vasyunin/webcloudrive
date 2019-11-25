@@ -49,10 +49,11 @@ public class FileEntity {
 
     @Transient
     public FileType getFileType(){
-        switch (getType()){
+        switch (getType().toLowerCase()){
             case "jpeg":
             case "jpg":
             case "gif":
+            case "png":
             case "bmp": return FileType.IMAGE;
             case "pdf": return FileType.PDF;
             case "avi":

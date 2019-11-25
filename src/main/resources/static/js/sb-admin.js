@@ -1,6 +1,10 @@
 (function ($) {
     "use strict"; // Start of use strict
 
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    });
+
     var token = $("meta[name='_csrf']").attr("content");
     var header = $("meta[name='_csrf_header']").attr("content");
 
@@ -119,7 +123,9 @@
                                 .append('</tr>');
                         } else {
                             row = $("<tr itemid='" + file.id + "' class=\"fileitem\">")
-                                .append('<td><a href="/api/file/' + file.id + '"  tabindex="0" itemid="' + file.id + '" class="text-muted" ' + ((file.preview.filenames.length > 0)? ' data-toggle="popover" data-trigger="hover" data-content="***********************" data-container="body" ' : '') + '>' + file.filename + '</a></td>')
+                                .append('<td><a href="/api/file/' + file.id + '"  tabindex="0" itemid="' + file.id + '" class="text-muted" ' + ((file.countPreviews > 0)? ' data-toggle="popover" data-trigger="hover" data-content="'
+                                    + '<img src=\'/api/preview/' + file.id + '\'>'
+                                    + '" data-container="body" ' : '') + '>' + file.filename + '</a></td>')
                                 .append('<td><div class="dropdown">\n' +
                                     '  <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton' + file.id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>\n' +
                                     '  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton' + file.id + ' ">\n' +
@@ -134,8 +140,12 @@
                                 .append('</tr>');
                         }
                         $("#fileTable").append(row);
-                        // Need to change Resumable query to current directory
                     });
+
+                    $(function () {
+                        $('[data-toggle="popover"]').popover({html: true})
+                    });
+
 
                     $(document).on('click', 'td.directoryitem', function (event) {
                         filelistLoad($(this).attr("itemid"));

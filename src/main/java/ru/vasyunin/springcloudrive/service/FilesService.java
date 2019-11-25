@@ -3,6 +3,7 @@ package ru.vasyunin.springcloudrive.service;
 import com.ibm.icu.text.Transliterator;
 import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
+import org.openimaj.image.MBFImage;
 import org.openimaj.image.processing.resize.ResizeProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 import ru.vasyunin.springcloudrive.dto.FileItemDto;
-import ru.vasyunin.springcloudrive.dto.FilePreviewDto;
 import ru.vasyunin.springcloudrive.entity.DirectoryItem;
 import ru.vasyunin.springcloudrive.entity.FileEntity;
 import ru.vasyunin.springcloudrive.entity.FilePreview;
@@ -25,6 +25,7 @@ import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileType;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.file.Files;
@@ -32,7 +33,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,16 +42,21 @@ import java.util.stream.Collectors;
 public class FilesService {
 
     @Value("${cloudrive.storage.directory}")
-    private String STORAGE;
+    private String STORAGE_DIR;
+
+    @Value("${cloudrive.storage.previewfolder}")
+    private String PREVIEW_DIR;
 
     private final FilesRepository filesRepository;
     private final FilePreviewRepository previewRepository;
     private final DirectoryRepository directoryRepository;
+    private final EntityManager entityManager;
 
-    public FilesService(FilesRepository filesRepository, FilePreviewRepository previewRepository, DirectoryRepository directoryRepository) {
+    public FilesService(FilesRepository filesRepository, FilePreviewRepository previewRepository, DirectoryRepository directoryRepository, EntityManager entityManager) {
         this.filesRepository = filesRepository;
         this.previewRepository = previewRepository;
         this.directoryRepository = directoryRepository;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -72,7 +77,7 @@ public class FilesService {
      * @throws FileNotFoundException
      */
     public ResponseEntity<InputStreamResource> getFileResponse(FileEntity fileEntity, User user) throws FileNotFoundException {
-        File file = new File(STORAGE + File.separator + user.getId() + File.separator  + fileEntity.getFilename());
+        File file = new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
 
         Transliterator toLatinTrans = Transliterator.getInstance("Russian-Latin/BGN");
@@ -94,20 +99,20 @@ public class FilesService {
 
         // If parent directory exists show it as ".."
         if (currentDirectory.getParent() != null){
-            result.add(new FileItemDto(currentDirectory.getParentId(), "..", 0, "", null, true, null));
+            result.add(new FileItemDto(currentDirectory.getParentId(), "..", 0, "", null, true, 0));
         }
 
         // Add subdirectories to response
         result.addAll(currentDirectory.getSubdirs().stream()
                 .sorted(Comparator.comparing(DirectoryItem::getName))
-                .map(dir -> new FileItemDto(dir.getId(), dir.getName(), 0L, null, null, true, null))
+                .map(dir -> new FileItemDto(dir.getId(), dir.getName(), 0L, null, null, true, 0))
                 .collect(Collectors.toList()));
 
         // Add filelist to response
         result.addAll(currentDirectory.getFiles().stream()
                 .filter(FileEntity::isCompleted)
                 .sorted(Comparator.comparing(FileEntity::getOriginFilename))
-                .map(file -> new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false, new FilePreviewDto(file)))
+                .map(file -> new FileItemDto(file.getId(), file.getOriginFilename(), file.getSize(), file.getType(), file.getLast_modified(), false, file.getPreviews().size()))
                 .collect(Collectors.toList()));
 
         return result;
@@ -142,7 +147,7 @@ public class FilesService {
             }
         }
 
-        String filename = STORAGE + File.separator + user.getId() + File.separator + chunkInfo.localFilename;
+        String filename = STORAGE_DIR + File.separator + user.getId() + File.separator + chunkInfo.localFilename;
         try (RandomAccessFile raf = new RandomAccessFile(filename, "rw")) {
             raf.seek(chunkInfo.offset);
             raf.write(file.getBytes());
@@ -164,8 +169,14 @@ public class FilesService {
         if (fileEntity == null) return false;
 
         try {
-            Files.delete(Paths.get(STORAGE + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
+            if (fileEntity.getPreviews().size() > 0){
+                for (FilePreview fpv : fileEntity.getPreviews()) {
+                    previewRepository.delete(fpv);
+                    Files.delete(Paths.get(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
+                }
+            }
             filesRepository.deleteById(fileId);
+            Files.delete(Paths.get(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
             return true;
         } catch (NoSuchFileException e) {
             filesRepository.deleteById(fileId);
@@ -183,10 +194,12 @@ public class FilesService {
         previewRepository.deleteFilePreviewsByFile(fileEntity);
         if (fileEntity.getFileType() == FileType.IMAGE){
             try {
-                FImage image = ImageUtilities.readF(new File(STORAGE + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
+                FilePreview fpv = new FilePreview(fileEntity);
+                previewRepository.save(fpv);
+                entityManager.refresh(fpv);
+                FImage image = ImageUtilities.readF(new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
                 image = ResizeProcessor.resizeMax(image, 200);
-                ImageUtilities.write(image, "gif", new File(STORAGE + File.separator + user.getId() + File.separator  + "previews" + File.separator + fileEntity.getFilename()));
-                previewRepository.save(new FilePreview(fileEntity));
+                ImageUtilities.write(image, "gif", new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + "previews" + File.separator + fpv.getFilename()));
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -194,4 +207,23 @@ public class FilesService {
         }
         return true;
     }
+
+
+    /**
+     * Downloading file
+     * @param fileEntity
+     * @param user
+     * @return
+     * @throws FileNotFoundException
+     */
+    public ResponseEntity<InputStreamResource> getFilePreviewResponse(FileEntity fileEntity, User user) throws FileNotFoundException {
+//        File file = new File(STORAGE_DIR + File.separator + user.getId() + File.separator + PREVIEW_DIR + File.separator  + fileEntity.getPreviews().get(0));
+        File file = new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fileEntity.getPreviews().get(0).getFilename()));
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"image" + fileEntity.getFilename() + ".gif\"")
+                .contentLength(file.length())
+                .body(resource);
+    }
+
 }

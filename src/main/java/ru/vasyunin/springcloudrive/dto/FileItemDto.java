@@ -13,16 +13,16 @@ public class FileItemDto {
     private final String type;
     private final LocalDateTime dateModified;
     private final boolean isDirectory;
-    private final FilePreviewDto preview;
+    private final int countPreviews;
 
-    public FileItemDto(Long id, String filename, long size, String type, LocalDateTime dateModified, boolean isDirectory, FilePreviewDto preview) {
+    public FileItemDto(Long id, String filename, long size, String type, LocalDateTime dateModified, boolean isDirectory, int countPreviews) {
         this.id = id;
         this.filename = filename;
         this.size = size;
         this.type = type;
         this.dateModified = dateModified;
         this.isDirectory = isDirectory;
-        this.preview = preview;
+        this.countPreviews = countPreviews;
     }
 
     @Override

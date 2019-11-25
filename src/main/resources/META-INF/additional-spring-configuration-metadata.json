@@ -19,5 +19,10 @@
       "name": "cloudrive.web.server-url",
       "type": "java.lang.String",
       "description": "External server url for cloudrive webserver"
+    },
+    {
+      "name": "cloudrive.storage.previewfolder",
+      "type": "java.lang.String",
+      "description": "Folder for previews"
     }
   ] }
