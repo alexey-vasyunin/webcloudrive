@@ -3,6 +3,7 @@ cloudrive:
     directory: c:\\temp\\storage
     create_if_not_exists: true
     tempfilder: 8da8d664-4882-4391-98bb-70aa921cdc30
+    previewfolder: previews
   web.server-url: http://localhost:8080
 
 spring:

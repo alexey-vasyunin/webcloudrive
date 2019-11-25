@@ -95,4 +95,13 @@ create unique index registration_token_user_id_uindex
 
 
 
+create table files_previews
+(
+    preview_id bigserial constraint files_previews_pk primary key,
+    file_id bigint not null constraint previews_files_file_id_fk references files,
+    filename varchar(36) default uuid_generate_v4()
+);
+
+alter table files_previews owner to cloudrive;
+
 

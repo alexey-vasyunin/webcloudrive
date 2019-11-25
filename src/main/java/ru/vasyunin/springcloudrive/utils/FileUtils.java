@@ -1,9 +1,11 @@
 package ru.vasyunin.springcloudrive.utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 
 public class FileUtils {
@@ -49,5 +51,9 @@ public class FileUtils {
 
     public static Optional<Path> createSubfolder(String path){
         return createSubfolder(Paths.get(path));
+    }
+
+    public static String getPath(String... path){
+        return String.join(File.separator, path);
     }
 }

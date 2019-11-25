@@ -65,7 +65,9 @@ public class DirectoryService {
         DirectoryItem item = new DirectoryItem();
         item.setUser(user);
         item.setName("root");
-        FileUtils.createSubfolder(STORAGE + File.separator + user.getId());
+        String userPath = STORAGE + File.separator + user.getId();
+        FileUtils.createSubfolder(userPath);
+        FileUtils.createSubfolder(userPath + File.separator + "previews");
         return directoryRepository.save(item);
     }
 

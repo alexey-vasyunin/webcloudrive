@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.vasyunin.springcloudrive.entity.FileItem;
+import ru.vasyunin.springcloudrive.entity.FileEntity;
 import ru.vasyunin.springcloudrive.entity.User;
 import ru.vasyunin.springcloudrive.service.FilesService;
 import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
@@ -61,13 +61,14 @@ public class FilesController {
             // Get info about chunk from request
             FileChunkInfo chunkInfo = new FileChunkInfo(request);
             // Save fileinfo in database
-            FileItem fileItem = filesService.processChunk(user, chunkInfo, file);
+            FileEntity fileEntity = filesService.processChunk(user, chunkInfo, file);
 
             chunks.addChunk(chunkInfo);
 
-            // If file is downloaded set complited in FileItem
+            // If file is downloaded set complited in FileEntity
             if (chunks.isDone(chunkInfo)) {
-                filesService.setFileComplited(fileItem);
+                filesService.setFileComplited(fileEntity);
+                filesService.createPreviewFile(user, fileEntity);
             }
         }
         return new ResponseEntity(HttpStatus.OK);
@@ -83,13 +84,13 @@ public class FilesController {
     @GetMapping(value = "/{id}", produces = "application/octet-stream")
     public ResponseEntity<InputStreamResource> getFile(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
         User user = (User) session.getAttribute("user");
-        FileItem fileItem = filesService.getFileById(user, id);
+        FileEntity fileEntity = filesService.getFileById(user, id);
 
-        if (fileItem == null)
+        if (fileEntity == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 
         try {
-            return filesService.getFileResponse(fileItem, user);
+            return filesService.getFileResponse(fileEntity, user);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
