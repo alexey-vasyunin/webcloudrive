@@ -1,6 +1,11 @@
 package ru.vasyunin.springcloudrive.service;
 
 import com.ibm.icu.text.Transliterator;
+import net.sf.jasperreports.engine.util.FileBufferedOutputStream;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.tools.imageio.ImageIOUtil;
 import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.MBFImage;
@@ -25,8 +30,10 @@ import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileType;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
+import javax.imageio.stream.FileImageOutputStream;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -171,7 +178,7 @@ public class FilesService {
         try {
             if (fileEntity.getPreviews().size() > 0){
                 for (FilePreview fpv : fileEntity.getPreviews()) {
-                    previewRepository.delete(fpv);
+                    previewRepository.deleteById(fpv.getId());
                     Files.delete(Paths.get(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
                 }
             }
@@ -192,14 +199,35 @@ public class FilesService {
 
     public boolean createPreviewFile(User user, FileEntity fileEntity){
         previewRepository.deleteFilePreviewsByFile(fileEntity);
+        File file = new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), fileEntity.getFilename()));
         if (fileEntity.getFileType() == FileType.IMAGE){
             try {
                 FilePreview fpv = new FilePreview(fileEntity);
                 previewRepository.save(fpv);
                 entityManager.refresh(fpv);
-                FImage image = ImageUtilities.readF(new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
+                FImage image = ImageUtilities.readF(file);
                 image = ResizeProcessor.resizeMax(image, 200);
-                ImageUtilities.write(image, "gif", new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + "previews" + File.separator + fpv.getFilename()));
+                ImageUtilities.write(image, "gif", new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else if (fileEntity.getFileType() == FileType.PDF) {
+            try {
+                PDDocument document = PDDocument.load(file);
+                PDFRenderer pdfRenderer = new PDFRenderer(document);
+                System.out.println(document.getNumberOfPages());
+                for (int i = 0; i < document.getNumberOfPages() && i < 5; i++) {
+                    FilePreview fpv = new FilePreview(fileEntity);
+                    previewRepository.save(fpv);
+                    entityManager.refresh(fpv);
+
+                    BufferedImage bim = pdfRenderer.renderImageWithDPI(i, 50, ImageType.RGB);
+                    FileOutputStream fos = new FileOutputStream(new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
+                    ImageIOUtil.writeImage(bim, "gif", fos,50,1f);
+                    fos.flush();
+                    fos.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
