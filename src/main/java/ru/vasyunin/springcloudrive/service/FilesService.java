@@ -1,6 +1,11 @@
 package ru.vasyunin.springcloudrive.service;
 
 import com.ibm.icu.text.Transliterator;
+import net.sf.jasperreports.engine.util.FileBufferedOutputStream;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.tools.imageio.ImageIOUtil;
 import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.MBFImage;
@@ -25,8 +30,10 @@ import ru.vasyunin.springcloudrive.utils.FileChunkInfo;
 import ru.vasyunin.springcloudrive.utils.FileType;
 import ru.vasyunin.springcloudrive.utils.FileUtils;
 
+import javax.imageio.stream.FileImageOutputStream;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -61,23 +68,25 @@ public class FilesService {
 
     /**
      * Get FileEntity by id
+     *
      * @param user
      * @param id
      * @return
      */
-    public FileEntity getFileById(User user, long id){
+    public FileEntity getFileById(User user, long id) {
         return filesRepository.findFileItemByUserAndId(user, id);
     }
 
     /**
      * Downloading file
+     *
      * @param fileEntity
      * @param user
      * @return
      * @throws FileNotFoundException
      */
     public ResponseEntity<InputStreamResource> getFileResponse(FileEntity fileEntity, User user) throws FileNotFoundException {
-        File file = new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename());
+        File file = new File(STORAGE_DIR + File.separator + user.getId() + File.separator + fileEntity.getFilename());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
 
         Transliterator toLatinTrans = Transliterator.getInstance("Russian-Latin/BGN");
@@ -89,16 +98,17 @@ public class FilesService {
     }
 
 
-        /**
-         * Function return list of directories and files in directory
-         * @param currentDirectory
-         * @return
-         */
-    public List<FileItemDto> getFilelistByDirectory(DirectoryItem currentDirectory){
+    /**
+     * Function return list of directories and files in directory
+     *
+     * @param currentDirectory
+     * @return
+     */
+    public List<FileItemDto> getFilelistByDirectory(DirectoryItem currentDirectory) {
         List<FileItemDto> result = new ArrayList<>();
 
         // If parent directory exists show it as ".."
-        if (currentDirectory.getParent() != null){
+        if (currentDirectory.getParent() != null) {
             result.add(new FileItemDto(currentDirectory.getParentId(), "..", 0, "", null, true, 0));
         }
 
@@ -120,11 +130,12 @@ public class FilesService {
 
     /**
      * Function creates record in database about file (isComplited = false)
+     *
      * @param user
      * @param chunkInfo
      * @return FileEntity object of file
      */
-    public FileEntity processChunk(User user, FileChunkInfo chunkInfo, MultipartFile file){
+    public FileEntity processChunk(User user, FileChunkInfo chunkInfo, MultipartFile file) {
         DirectoryItem dir = directoryRepository.findDirectoryItemByUserAndId(user, chunkInfo.relativePath);
         if (dir == null)
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
@@ -159,24 +170,33 @@ public class FilesService {
         return item;
     }
 
-    public void setFileComplited(FileEntity fileEntity){
+    public void setFileComplited(FileEntity fileEntity) {
         fileEntity.setCompleted(true);
         filesRepository.saveAndFlush(fileEntity);
     }
 
-    public boolean deleteFile(User user, long fileId){
+    public boolean deleteFile(User user, long fileId) {
         FileEntity fileEntity = filesRepository.findFileItemByUserAndId(user, fileId);
         if (fileEntity == null) return false;
 
-        try {
-            if (fileEntity.getPreviews().size() > 0){
-                for (FilePreview fpv : fileEntity.getPreviews()) {
-                    previewRepository.delete(fpv);
+        System.out.println(fileEntity.getPreviews());
+        if (fileEntity.getPreviews().size() > 0) {
+            for (FilePreview fpv : fileEntity.getPreviews()) {
+                try {
                     Files.delete(Paths.get(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
+                    previewRepository.deleteById(fpv.getId());
+                } catch (NoSuchFileException e) {
+                    previewRepository.deleteById(fpv.getId());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
                 }
             }
+        }
+
+        try {
+            Files.delete(Paths.get(STORAGE_DIR + File.separator + user.getId() + File.separator + fileEntity.getFilename()));
             filesRepository.deleteById(fileId);
-            Files.delete(Paths.get(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
             return true;
         } catch (NoSuchFileException e) {
             filesRepository.deleteById(fileId);
@@ -190,16 +210,37 @@ public class FilesService {
         return filesRepository.setName(user, id, name) > 0;
     }
 
-    public boolean createPreviewFile(User user, FileEntity fileEntity){
+    public boolean createPreviewFile(User user, FileEntity fileEntity) {
         previewRepository.deleteFilePreviewsByFile(fileEntity);
-        if (fileEntity.getFileType() == FileType.IMAGE){
+        File file = new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), fileEntity.getFilename()));
+        if (fileEntity.getFileType() == FileType.IMAGE) {
             try {
                 FilePreview fpv = new FilePreview(fileEntity);
                 previewRepository.save(fpv);
                 entityManager.refresh(fpv);
-                FImage image = ImageUtilities.readF(new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + fileEntity.getFilename()));
+                FImage image = ImageUtilities.readF(file);
                 image = ResizeProcessor.resizeMax(image, 200);
-                ImageUtilities.write(image, "gif", new File(STORAGE_DIR + File.separator + user.getId() + File.separator  + "previews" + File.separator + fpv.getFilename()));
+                ImageUtilities.write(image, "gif", new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else if (fileEntity.getFileType() == FileType.PDF) {
+            try {
+                PDDocument document = PDDocument.load(file);
+                PDFRenderer pdfRenderer = new PDFRenderer(document);
+                System.out.println(document.getNumberOfPages());
+                for (int i = 0; i < document.getNumberOfPages() && i < 5; i++) {
+                    FilePreview fpv = new FilePreview(fileEntity);
+                    previewRepository.save(fpv);
+                    entityManager.refresh(fpv);
+
+                    BufferedImage bim = pdfRenderer.renderImageWithDPI(i, 50, ImageType.RGB);
+                    FileOutputStream fos = new FileOutputStream(new File(FileUtils.getPath(STORAGE_DIR, user.getId().toString(), PREVIEW_DIR, fpv.getFilename())));
+                    ImageIOUtil.writeImage(bim, "gif", fos, 50, 1f);
+                    fos.close();
+                }
+                document.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -211,6 +252,7 @@ public class FilesService {
 
     /**
      * Downloading file
+     *
      * @param fileEntity
      * @param user
      * @return
